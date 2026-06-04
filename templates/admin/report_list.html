@@ -1,0 +1,113 @@
+{% extends 'admin_base.html' %}
+{% block title %}举报与申诉 - 管理后台{% endblock %}
+{% block header %}举报与申诉{% endblock %}
+{% block content %}
+<div class="report-tabs">
+    <a href="?status=pending" class="log-tab {% if status == 'pending' %}active{% endif %}">待处理 {% if pending_count %}({{ pending_count }}){% endif %}</a>
+    <a href="?status=resolved" class="log-tab {% if status == 'resolved' %}active{% endif %}">已处理</a>
+    <a href="?status=dismissed" class="log-tab {% if status == 'dismissed' %}active{% endif %}">已驳回</a>
+    <a href="?status=all" class="log-tab {% if status == 'all' %}active{% endif %}">全部</a>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>类型</th>
+            <th>提交人</th>
+            <th>被举报用户</th>
+            <th>原因</th>
+            <th>内容摘要</th>
+            <th>状态</th>
+            <th>时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in reports %}
+        <tr>
+            <td>{{ r.id }}</td>
+            <td>{{ r.get_report_type_display }}</td>
+            <td>{{ r.reporter.username }}</td>
+            <td>
+                {% if r.report_type == 'appeal' %}
+                <span class="text-muted">—</span>
+                {% else %}
+                {% with reported=r.post.author|default:r.comment.user %}
+                {% if reported %}
+                <a href="{% url 'admin_user_list' %}">@{{ reported.username }}</a>
+                {% if reported.profile.is_banned %}<span class="punish-badge punish-badge--ban">封</span>{% endif %}
+                {% if reported.profile.is_muted %}<span class="punish-badge punish-badge--mute">禁</span>{% endif %}
+                {% if reported.profile.login_restricted %}<span class="punish-badge punish-badge--login">限</span>{% endif %}
+                {% else %}
+                <span class="text-muted">已删除</span>
+                {% endif %}
+                {% endwith %}
+                {% endif %}
+            </td>
+            <td>{{ r.get_reason_display }}</td>
+            <td class="report-summary">
+                {% if r.post %}<a href="{% url 'post_detail' r.post.id %}" target="_blank">《{{ r.post.title|truncatechars:16 }}》</a>{% endif %}
+                {% if r.comment %}评论 @{{ r.comment.user.username }}：{{ r.comment.content|truncatechars:30 }}{% endif %}
+                {% if r.report_type == 'appeal' %}{{ r.detail|truncatechars:40 }}{% endif %}
+                {% if r.detail and r.report_type != 'appeal' %}<br><span class="text-muted">{{ r.detail|truncatechars:40 }}</span>{% endif %}
+            </td>
+            <td>
+                {% if r.status == 'pending' %}<span class="badge badge-warning">待处理</span>
+                {% elif r.status == 'resolved' %}<span class="badge badge-success">已处理</span>
+                {% else %}<span class="badge badge-muted">已驳回</span>{% endif %}
+            </td>
+            <td>{{ r.created_at|date:"m-d H:i" }}</td>
+            <td>
+                {% if r.status == 'pending' %}
+                <div class="report-actions">
+                    <form method="post" action="{% url 'admin_report_handle' r.id %}" class="report-handle-form">
+                        {% csrf_token %}
+                        <input type="text" name="admin_note" placeholder="处理备注" maxlength="500" class="punish-note-input">
+                        <div class="punish-btns">
+                            <button type="submit" name="action" value="resolve" class="btn btn-primary btn-sm">标记已处理</button>
+                            <button type="submit" name="action" value="dismiss" class="btn btn-secondary btn-sm">驳回</button>
+                        </div>
+                    </form>
+                    {% if r.report_type != 'appeal' %}
+                    {% with reported=r.post.author|default:r.comment.user %}
+                    {% if reported and not reported.is_staff %}
+                    <details class="report-punish-panel" style="margin-top:6px;">
+                        <summary class="btn btn-danger btn-sm">处罚该用户</summary>
+                        <form method="post" action="{% url 'admin_user_punish' reported.id %}" class="report-punish-form" style="margin-top:6px;">
+                            {% csrf_token %}
+                            <input type="text" name="note" placeholder="处罚原因（可选）" maxlength="500" class="punish-note-input">
+                            <div class="punish-btns">
+                                {% if reported.profile.is_banned %}
+                                <button type="submit" name="action" value="unban" class="btn btn-secondary btn-sm">解封</button>
+                                {% else %}
+                                <button type="submit" name="action" value="ban" class="btn btn-danger btn-sm" data-confirm="确定封号？">封号</button>
+                                {% endif %}
+                                {% if reported.profile.is_muted %}
+                                <button type="submit" name="action" value="unmute" class="btn btn-secondary btn-sm">解禁</button>
+                                {% else %}
+                                <button type="submit" name="action" value="mute" class="btn btn-warning btn-sm" data-confirm="确定禁言？">禁言</button>
+                                {% endif %}
+                                {% if reported.profile.login_restricted %}
+                                <button type="submit" name="action" value="allow_login" class="btn btn-secondary btn-sm">允许登录</button>
+                                {% else %}
+                                <button type="submit" name="action" value="restrict_login" class="btn btn-warning btn-sm" data-confirm="确定限制登录？">限制登录</button>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </details>
+                    {% endif %}
+                    {% endwith %}
+                    {% endif %}
+                </div>
+                {% else %}
+                <span class="text-muted" title="{{ r.admin_note }}">{{ r.handled_by.username|default:"—" }} · {{ r.handled_at|date:"m-d H:i" }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center text-muted">暂无记录</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

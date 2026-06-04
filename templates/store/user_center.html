@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}个人中心 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container user-center-page">
+    <nav class="page-breadcrumb">
+        <a href="{% url 'index' %}">首页</a>
+        <span>/</span>
+        <span>个人中心</span>
+    </nav>
+    <h1>个人中心</h1>
+    {% if profile.is_banned or profile.is_muted or profile.login_restricted %}
+    <div class="account-punish-notice glass">
+        <strong>账号状态：</strong>
+        {% if profile.is_banned %}<span class="punish-badge punish-badge--ban">封号</span>{% endif %}
+        {% if profile.is_muted %}<span class="punish-badge punish-badge--mute">禁言</span>{% endif %}
+        {% if profile.login_restricted %}<span class="punish-badge punish-badge--login">限制登录</span>{% endif %}
+        {% if profile.is_muted and not profile.is_banned %}<p class="text-muted">您已被禁言，暂不可发帖或评论，仍可浏览内容。</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="user-quick-links glass">
+        <a href="{% url 'user_favorites' %}" class="user-quick-link">☆ 想吃清单 {% if favorite_count %}<span class="badge badge-primary">{{ favorite_count }}</span>{% endif %}</a>
+        <a href="{% url 'incentive' %}" class="user-quick-link">🏆 创作激励</a>
+    </div>
+
+    <div class="user-center-grid">
+        <div class="glass form-card">
+            <h2>基本信息</h2>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="profile">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" value="{{ request.user.username }}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" name="email" value="{{ request.user.email }}">
+                </div>
+                <div class="form-group">
+                    <label>校区 / 院系</label>
+                    <input type="text" name="campus" value="{{ profile.campus|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>手机号</label>
+                    <input type="text" name="phone" value="{{ profile.phone|default:'' }}">
+                </div>
+                <button type="submit" class="btn btn-primary">保存资料</button>
+            </form>
+        </div>
+        <div class="glass form-card">
+            <h2>修改密码</h2>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="password">
+                <div class="form-group">
+                    <label>原密码</label>
+                    <input type="password" name="old_password" required>
+                </div>
+                <div class="form-group">
+                    <label>新密码</label>
+                    <input type="password" name="new_password" required minlength="4">
+                </div>
+                <div class="form-group">
+                    <label>确认新密码</label>
+                    <input type="password" name="new_password2" required>
+                </div>
+                <button type="submit" class="btn btn-secondary">修改密码</button>
+            </form>
+        </div>
+    </div>
+
+    <section class="glass form-card appeal-section">
+        <h2>账号申诉</h2>
+        <p class="text-muted">若您认为处罚有误，可提交申诉，管理员会在后台处理。</p>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="appeal">
+            <div class="form-group">
+                <textarea name="appeal_detail" rows="4" maxlength="1000" required placeholder="请说明申诉理由（至少10字）"></textarea>
+            </div>
+            <button type="submit" class="btn btn-warning btn-sm">提交申诉</button>
+        </form>
+        {% if my_appeals %}
+        <ul class="appeal-history">
+            {% for a in my_appeals %}
+            <li>
+                <span class="badge {% if a.status == 'pending' %}badge-warning{% elif a.status == 'resolved' %}badge-success{% else %}badge-muted{% endif %}">{{ a.get_status_display }}</span>
+                {{ a.detail|truncatechars:60 }}
+                <time>{{ a.created_at|date:"Y-m-d" }}</time>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    <div class="glass user-incentive-summary" style="margin-bottom:20px;padding:16px 20px;">
+        <div style="display:flex;gap:24px;flex-wrap:wrap;">
+            <div><span class="text-muted">发布情报</span><br><strong style="font-size:24px;">{{ my_posts|length }}</strong></div>
+            <div><span class="text-muted">获 👍 推荐</span><br><strong style="font-size:24px;">{{ total_endorsements_received }}</strong></div>
+            <div style="display:flex;align-items:center;"><a href="{% url 'incentive' %}" class="btn btn-primary btn-sm">🏆 查看创作激励</a></div>
+        </div>
+    </div>
+
+    <section class="my-posts-section">
+        <div class="section-head">
+            <h2>我发布的情报</h2>
+            {% if can_post %}<a href="{% url 'post_create' %}" class="btn btn-primary btn-sm">+ 新发一条</a>{% endif %}
+        </div>
+        {% if my_posts %}
+        <ul class="my-post-list glass">
+            {% for p in my_posts %}
+            <li>
+                <a href="{% url 'post_detail' p.id %}"><strong>{{ p.title }}</strong></a>
+                <span class="text-muted">{{ p.created_at|date:"Y-m-d" }} · {{ p.location }} · 👁 {{ p.view_count }} · 👍 {{ p.endorse_count }}</span>
+                <a href="{% url 'post_edit' p.id %}" class="btn btn-link btn-sm">编辑</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">你还没有分享过，<a href="{% url 'post_create' %}">去发第一条</a></p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

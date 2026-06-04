@@ -1,0 +1,87 @@
+{% extends 'admin_base.html' %}
+{% block title %}日志管理{% endblock %}
+{% block header %}📋 登录与操作日志{% endblock %}
+{% block content %}
+<div class="log-toolbar glass">
+    <div class="log-tabs">
+        <a href="?tab=login{% if keyword %}&q={{ keyword }}{% endif %}" class="log-tab {% if tab == 'login' %}active{% endif %}">登录日志</a>
+        <a href="?tab=operation{% if keyword %}&q={{ keyword }}{% endif %}" class="log-tab {% if tab == 'operation' %}active{% endif %}">操作日志</a>
+    </div>
+    <form method="get" class="log-search">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <input type="text" name="q" value="{{ keyword }}" placeholder="搜索账号 / IP / 详情…">
+        <button type="submit" class="btn btn-primary btn-sm">搜索</button>
+        {% if keyword %}
+        <a href="?tab={{ tab }}" class="btn btn-secondary btn-sm">清除</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if tab == 'login' %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>时间</th><th>账号</th><th>类型</th><th>结果</th><th>IP</th><th>浏览器/设备</th><th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+            <td><strong>{{ log.username }}</strong>{% if log.user_id %} <span class="text-muted">(#{{ log.user_id }})</span>{% endif %}</td>
+            <td>{{ log.get_login_type_display }}</td>
+            <td>
+                {% if log.success %}
+                <span class="badge badge-success">成功</span>
+                {% else %}
+                <span class="badge badge-danger">失败</span>
+                {% endif %}
+            </td>
+            <td>{{ log.ip_address|default:"—" }}</td>
+            <td class="log-ua" title="{{ log.user_agent }}">{{ log.user_agent|truncatechars:60|default:"—" }}</td>
+            <td>
+                <form method="post" action="{% url 'admin_log_delete' log.id %}?tab=login" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm" data-confirm="确定删除此登录日志？">删除</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center">暂无登录日志</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>时间</th><th>用户</th><th>操作</th><th>详情</th><th>IP</th><th>浏览器/设备</th><th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+            <td><strong>{{ log.username|default:"—" }}</strong>{% if log.user_id %} <span class="text-muted">(#{{ log.user_id }})</span>{% endif %}</td>
+            <td>{{ log.get_action_display }}</td>
+            <td class="log-detail" title="{{ log.detail }}">
+                {% if log.target_type and log.target_id %}{{ log.target_type }}#{{ log.target_id }} · {% endif %}{{ log.detail|truncatechars:80|default:"—" }}
+            </td>
+            <td>{{ log.ip_address|default:"—" }}</td>
+            <td class="log-ua" title="{{ log.user_agent }}">{{ log.user_agent|truncatechars:60|default:"—" }}</td>
+            <td>
+                <form method="post" action="{% url 'admin_log_delete' log.id %}?tab=operation" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm" data-confirm="确定删除此操作日志？">删除</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center">暂无操作日志</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<p class="text-muted log-count">共 {{ logs|length }} 条记录（最近 500 条）</p>
+{% endblock %}

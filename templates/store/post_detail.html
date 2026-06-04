@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title }} - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container post-detail-page">
+    <nav class="page-breadcrumb">
+        <a href="{% url 'index' %}">首页</a>
+        <span>/</span>
+        <a href="{% url 'post_list' %}">逛一逛</a>
+        <span>/</span>
+        <span>{{ post.title|truncatechars:20 }}</span>
+    </nav>
+
+    <article class="post-detail glass">
+        <div class="post-detail-main">
+            {% if post.category %}<span class="badge badge-primary">{{ post.category.icon }} {{ post.category.name }}</span>{% endif %}
+            <h1>{{ post.title }}{% if post.is_edited %} <span class="badge badge-muted">已编辑</span>{% endif %}</h1>
+            <div class="post-detail-tags">
+                <span class="detail-tag">📍 {{ post.location }}</span>
+                <span class="detail-tag">💰 {% if post.price %}{{ post.price }}{% else %}价格未标注{% endif %}</span>
+            </div>
+            <p class="author-line">
+                <a href="{% url 'user_profile' post.author.id %}">@{{ post.author.username }}</a>
+                <span>{{ post.created_at|date:"Y-m-d H:i" }}</span>
+                <span>👁 {{ post.view_count }} 浏览</span>
+                <span>👍 {{ post.endorse_count }} 推荐</span>
+            </p>
+            <div class="post-toolbar">
+                {% if request.user.is_authenticated %}
+                {% if post.author != request.user %}
+                <form method="post" class="post-toolbar-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="endorse">
+                    <button type="submit" class="btn btn-sm {% if is_endorsed %}btn-primary{% else %}btn-secondary{% endif %}">
+                        {% if is_endorsed %}👍 已推荐{% else %}👍 推荐{% endif %}
+                    </button>
+                </form>
+                {% elif post.author == request.user %}
+                <span class="post-endorse-hint text-muted">自己的分享不能自荐 👍</span>
+                {% endif %}
+                <form method="post" class="post-toolbar-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="favorite">
+                    <button type="submit" class="btn btn-secondary btn-sm">{% if is_favorited %}★ 已收藏{% else %}☆ 想吃{% endif %}</button>
+                </form>
+                {% if post.author != request.user %}
+                <details class="report-panel">
+                    <summary class="btn btn-link btn-sm">举报</summary>
+                    <form method="post" class="report-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="report">
+                        <select name="reason" required>
+                            {% for val, label in report_reasons %}
+                            <option value="{{ val }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <textarea name="detail" rows="2" maxlength="500" placeholder="补充说明（可选）"></textarea>
+                        <button type="submit" class="btn btn-warning btn-sm">提交举报</button>
+                    </form>
+                </details>
+                {% endif %}
+                {% else %}
+                <span class="post-endorse-hint text-muted">👍 {{ post.endorse_count }} 人推荐 · <a href="{% url 'user_login' %}?next={{ request.path }}">登录</a>后可推荐</span>
+                {% endif %}
+            </div>
+            <div class="post-content">{{ post.description|linebreaks }}</div>
+            {% if post.author == request.user or request.user.is_staff %}
+            <div class="post-detail-actions">
+                {% if post.author == request.user %}
+                <a href="{% url 'post_edit' post.id %}" class="btn btn-secondary btn-sm">编辑</a>
+                {% endif %}
+                <form method="post" action="{% url 'post_delete' post.id %}" onsubmit="return confirm('确定删除这条推荐？');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">删除此推荐</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if post.photos.all or post.cover_image or post.storefront_image %}
+        <div class="post-detail-media">
+            {% if post.photos.all %}
+            <section class="post-photo-gallery">
+                <h2 class="post-media-title">实拍图</h2>
+                <div class="post-photo-grid">
+                    {% for photo in post.photos.all %}
+                    <figure class="post-photo-item">
+                        <img src="{{ photo.image.url }}" alt="{{ post.title }} 实拍图 {{ forloop.counter }}" loading="lazy">
+                    </figure>
+                    {% endfor %}
+                </div>
+            </section>
+            {% elif post.cover_image %}
+            <section class="post-photo-gallery">
+                <h2 class="post-media-title">实拍图</h2>
+                <div class="post-photo-grid">
+                    <figure class="post-photo-item">
+                        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy">
+                    </figure>
+                </div>
+            </section>
+            {% endif %}
+            {% if post.storefront_image %}
+            <section class="post-storefront">
+                <h2 class="post-media-title">商家门头</h2>
+                <figure class="post-storefront-img">
+                    <img src="{{ post.storefront_image.url }}" alt="{{ post.title }} 门头照片" loading="lazy">
+                </figure>
+            </section>
+            {% endif %}
+        </div>
+        {% endif %}
+    </article>
+
+    <section class="comments-section glass">
+        <h2>评论 <span class="comment-count">{{ comments|length }}</span></h2>
+        {% if comments %}
+        <ul class="comment-list">
+            {% for c in comments %}
+            <li class="comment-item{% if c.parent %} comment-item--reply{% endif %}" id="comment-{{ c.id }}">
+                <div class="comment-head">
+                    <a href="{% url 'user_profile' c.user.id %}"><strong>@{{ c.user.username }}</strong></a>
+                    {% if c.parent %}<span class="comment-reply-to">回复 <a href="{% url 'user_profile' c.parent.user.id %}">@{{ c.parent.user.username }}</a></span>{% endif %}
+                    <span class="comment-time">{{ c.created_at|date:"m-d H:i" }}</span>
+                </div>
+                <p>{{ c.content|linebreaksbr }}</p>
+                {% if request.user.is_authenticated %}
+                <div class="comment-actions">
+                    <button type="button" class="btn btn-link btn-sm comment-reply-btn" data-parent-id="{{ c.id }}" data-username="{{ c.user.username }}">回复</button>
+                    {% if c.user != request.user %}
+                    <details class="report-panel report-panel--inline">
+                        <summary class="btn btn-link btn-sm">举报</summary>
+                        <form method="post" action="{% url 'report_comment' c.id %}" class="report-form">
+                            {% csrf_token %}
+                            <select name="reason" required>
+                                {% for val, label in report_reasons %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <textarea name="detail" rows="2" maxlength="500" placeholder="补充说明（可选）"></textarea>
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="btn btn-warning btn-sm">提交</button>
+                        </form>
+                    </details>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted comments-empty">还没有评论，来说说你的体验吧</p>
+        {% endif %}
+
+        {% if request.user.is_authenticated and can_comment %}
+        <form method="post" class="comment-form" id="commentForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="comment">
+            <input type="hidden" name="parent_id" id="commentParentId" value="">
+            <p id="replyHint" class="reply-hint text-muted" hidden>正在回复 <strong id="replyTarget"></strong> · <button type="button" class="btn btn-link btn-sm" id="cancelReply">取消</button></p>
+            <div class="form-group">
+                <label>写下你的评论</label>
+                <textarea name="content" id="commentContent" rows="3" maxlength="500" required placeholder="味道怎么样？排队久吗？值得去吗？"></textarea>
+            </div>
+            <p class="comment-disclaimer text-muted">发表评论即表示您同意《免责声明》，对评论内容承担法律责任。</p>
+            <button type="submit" class="btn btn-primary">发表评论</button>
+        </form>
+        {% elif request.user.is_authenticated %}
+        <p class="muted-notice glass-inset">{% if mute_message %}{{ mute_message }}{% else %}您已被禁言，暂不可发表评论。{% endif %}</p>
+        {% else %}
+        <p class="login-hint glass-inset"><a href="{% url 'user_login' %}?next={{ request.path }}">登录</a> 后即可评论</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

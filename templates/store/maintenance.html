@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ html_lang }}" data-theme="{{ site_theme }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+    (function () {
+        var t = localStorage.getItem('site_theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+    <title>网站维护中 - 干饭情报局</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="user-body">
+    <div class="maintenance-page">
+        <div class="maintenance-card glass">
+            <div class="maintenance-toolbar">{% include 'partials/preferences_bar.html' %}</div>
+            <span class="maintenance-icon">🔧</span>
+            <h1>网站维护中</h1>
+            <p class="maintenance-message">{{ site_closed_message }}</p>
+            <p class="maintenance-hint text-muted">当前仅管理员可登录后台，普通用户无法注册或登录。</p>
+            <a href="{% url 'admin_login' %}" class="btn btn-primary btn-lg">管理员登录</a>
+            <p class="footer-icp maintenance-icp">
+                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">豫ICP备2026020102号</a>
+            </p>
+        </div>
+    </div>
+    <script src="{% static 'js/site.js' %}"></script>
+</body>
+</html>

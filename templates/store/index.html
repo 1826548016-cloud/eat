@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}干饭情报局 - 校园干饭情报{% endblock %}
+{% block content %}
+<div class="home-page">
+    <section class="home-hero">
+        <div class="container home-hero-grid">
+            <div class="home-hero-main">
+                <p class="home-hero-brand">干饭情报局(内测版)</p>
+                <h1>今天吃啥？</h1>
+                <p class="home-hero-lead">校园干饭真实反馈，帮你告别选择困难</p>
+                <p class="home-hero-meta">{{ total_posts }} 条推荐 · {{ categories|length }} 个分类</p>
+                <div class="home-hero-actions">
+                    {% if request.user.is_authenticated %}
+                    <a href="{% url 'post_create' %}" class="btn btn-primary">分享我的午餐</a>
+                    {% else %}
+                    <a href="{% url 'user_register' %}" class="btn btn-primary">注册并分享</a>
+                    {% endif %}
+                    <a href="{% url 'post_list' %}" class="btn btn-secondary">逛一逛</a>
+                    <a href="{% url 'lunch_wheel' %}" class="btn btn-link">大转盘</a>
+                </div>
+                <p class="home-hero-legal text-muted">
+                    本站不接广告、不侵犯隐私、不恶意发布 · <a href="{% url 'disclaimer' %}">免责声明</a>
+                </p>
+            </div>
+
+            {% if today_pick %}
+            <a href="{% url 'post_detail' today_pick.id %}" class="home-hero-pick">
+                <span class="home-hero-pick-label">今日推荐</span>
+                {% if today_pick.cover_image %}
+                <div class="home-hero-pick-img"><img src="{{ today_pick.cover_image.url }}" alt="{{ today_pick.title }}" loading="lazy"></div>
+                {% else %}
+                <div class="home-hero-pick-img home-hero-pick-placeholder">🍜</div>
+                {% endif %}
+                <h2>{{ today_pick.title }}</h2>
+                <p>{{ today_pick.location }} · {% if today_pick.price %}{{ today_pick.price }}{% else %}价格未知{% endif %}</p>
+            </a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="home-stats">
+        <div class="container">
+            <header class="home-feed-head">
+                <h2>数据一览</h2>
+                <p class="home-stats-desc text-muted">{{ chart_data.total_posts }} 道菜品 · {{ chart_data.total_endorsements }} 次用户推荐</p>
+            </header>
+            <div class="home-charts">
+                <article class="home-chart-card glass">
+                    <h3>近 7 日新增菜品</h3>
+                    <div id="home-chart-new-posts" class="home-chart" role="img" aria-label="近七日新增菜品折线图"></div>
+                </article>
+                <article class="home-chart-card glass">
+                    <h3>分类菜品占比</h3>
+                    <div id="home-chart-categories" class="home-chart" role="img" aria-label="各分类菜品数量占比饼图"></div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-feed">
+        <div class="container">
+            <header class="home-feed-head">
+                <h2>最新推荐</h2>
+                <a href="{% url 'post_list' %}" class="home-feed-more">查看全部</a>
+            </header>
+
+            {% if categories %}
+            <nav class="home-categories" aria-label="按类型找吃的">
+                <a href="{% url 'post_list' %}" class="home-cat active">全部</a>
+                {% for cat in categories %}
+                <a href="{% url 'post_list' %}?category={{ cat.id }}" class="home-cat">{{ cat.icon }} {{ cat.name }}</a>
+                {% endfor %}
+            </nav>
+            {% endif %}
+
+            {% if posts %}
+            <div class="post-grid post-grid--clean">
+                {% for post in posts %}
+                <a href="{% url 'post_detail' post.id %}" class="post-card post-card--clean">
+            {% if post.cover_image %}
+            <div class="post-card-img"><img src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy"></div>
+                    {% else %}
+                    <div class="post-card-img post-card-placeholder">🍱</div>
+                    {% endif %}
+                    <div class="post-card-body">
+                        <h3>{{ post.title }}</h3>
+                        <p class="post-card-sub">{{ post.location }} · {% if post.price %}{{ post.price }}{% else %}价格未标注{% endif %}</p>
+                        {% if post.endorse_count %}<p class="post-card-meta">👍 {{ post.endorse_count }}</p>{% endif %}
+                        <p class="post-card-author">@{{ post.author.username }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state empty-state--minimal">
+                <p>还没有推荐，来做第一个分享午餐的同学吧</p>
+                <a href="{% url 'post_create' %}" class="btn btn-primary btn-sm">发布推荐</a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'echarts.js' %}"></script>
+{{ chart_data|json_script:"home-chart-data" }}
+<script src="{% static 'js/home-charts.js' %}"></script>
+{% endblock %}

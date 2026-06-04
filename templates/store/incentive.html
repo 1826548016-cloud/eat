@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}创作激励 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container incentive-page">
+    <nav class="page-breadcrumb">
+        <a href="{% url 'index' %}">首页</a>
+        <span>/</span>
+        <span>创作激励</span>
+    </nav>
+
+    <header class="page-hero page-hero--compact">
+        <h1>创作激励</h1>
+        <p class="page-hero-lead">每一份真实分享，都在让校园午餐变得更好 🍜</p>
+    </header>
+
+    <!-- 社区数据总览 -->
+    <div class="incentive-stats glass">
+        <div class="incentive-stat-item">
+            <span class="incentive-stat-value">{{ total_posts }}</span>
+            <span class="incentive-stat-label">情报总数</span>
+        </div>
+        <div class="incentive-stat-item">
+            <span class="incentive-stat-value">{{ total_users }}</span>
+            <span class="incentive-stat-label">社区成员</span>
+        </div>
+        <div class="incentive-stat-item">
+            <span class="incentive-stat-value">{{ total_endorsements }}</span>
+            <span class="incentive-stat-label">推荐互动</span>
+        </div>
+    </div>
+
+    {% if user_stats %}
+    <!-- 我的贡献 -->
+    <section class="incentive-section glass">
+        <h2>我的贡献</h2>
+        <div class="incentive-my-stats">
+            <div class="incentive-my-stat">
+                <span class="incentive-my-value">{{ user_stats.post_count }}</span>
+                <span class="incentive-my-label">发布情报</span>
+            </div>
+            <div class="incentive-my-stat">
+                <span class="incentive-my-value">{{ user_stats.endorse_received }}</span>
+                <span class="incentive-my-label">收获推荐</span>
+            </div>
+            <div class="incentive-my-stat">
+                <span class="incentive-my-value">{{ user_stats.total_views }}</span>
+                <span class="incentive-my-label">总浏览量</span>
+            </div>
+        </div>
+        {% if user_stats.top_post %}
+        <div class="incentive-my-top">
+            <span class="incentive-my-top-label">我的最佳情报</span>
+            <a href="{% url 'post_detail' user_stats.top_post.id %}" class="incentive-my-top-link">
+                {{ user_stats.top_post.title }}
+            </a>
+            <span class="text-muted">{{ user_stats.top_post.endorse_count }} 人推荐</span>
+        </div>
+        {% endif %}
+        {% if user_stats.post_count == 0 %}
+        <p class="incentive-empty-hint">你还没有分享过情报，快来写下你的第一篇午餐体验吧！</p>
+        <a href="{% url 'post_create' %}" class="btn btn-primary">分享午餐</a>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- 社区贡献排行榜 -->
+    <section class="incentive-section glass">
+        <h2>社区贡献榜</h2>
+        <p class="incentive-section-desc">以下同学用心分享，贡献了最多优质情报——</p>
+        <div class="incentive-leaderboard">
+            {% for author in top_authors %}
+            <div class="incentive-board-row">
+                <span class="incentive-rank{% if forloop.counter <= 3 %} incentive-rank--top{% endif %}">{{ forloop.counter }}</span>
+                <a href="{% url 'user_profile' author.id %}" class="incentive-board-name">@{{ author.username }}</a>
+                <span class="incentive-board-stat">{{ author.total_posts }} 篇情报</span>
+                <span class="incentive-board-stat">{{ author.endorse_received }} 推荐</span>
+            </div>
+            {% empty %}
+            <p class="incentive-empty-hint">暂无贡献数据，快来第一个分享吧！</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 热门情报 -->
+    <section class="incentive-section glass">
+        <h2>最受欢迎的情报</h2>
+        <p class="incentive-section-desc">获得最多推荐的真实分享——</p>
+        <div class="incentive-leaderboard">
+            {% for post in top_posts %}
+            <div class="incentive-board-row">
+                <span class="incentive-rank{% if forloop.counter <= 3 %} incentive-rank--top{% endif %}">{{ forloop.counter }}</span>
+                <div class="incentive-board-post">
+                    <a href="{% url 'post_detail' post.id %}">{{ post.title }}</a>
+                    <span class="incentive-board-meta">@{{ post.author.username }}</span>
+                </div>
+                <span class="incentive-board-stat">{{ post.endorse_count }} 推荐</span>
+            </div>
+            {% empty %}
+            <p class="incentive-empty-hint">暂无推荐情报，快去发现好店吧！</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 支持开发者 -->
+    <section class="incentive-section incentive-support glass">
+        <h2>支持开发者</h2>
+        <p class="incentive-section-desc">干饭情报局完全免费、无广告，服务器和开发维护都需要成本。<br>如果你觉得它帮到了你，欢迎请开发者喝杯奶茶 ☕</p>
+        <div class="incentive-qr-wrap">
+            <div class="incentive-qr-card" data-qr-trigger>
+                <div class="incentive-qr-img">
+                    <img src="/media/wechat_pay.jpg" alt="微信赞赏码" loading="lazy">
+                </div>
+                <div class="incentive-qr-info">
+                    <span class="incentive-qr-label">微信赞赏</span>
+                    <span class="incentive-qr-hint">点击放大 · 扫一扫</span>
+                </div>
+            </div>
+            <div class="incentive-qr-card" data-qr-trigger>
+                <div class="incentive-qr-img">
+                    <img src="/media/alipay.jpg" alt="支付宝收款码" loading="lazy">
+                </div>
+                <div class="incentive-qr-info">
+                    <span class="incentive-qr-label">支付宝转账</span>
+                    <span class="incentive-qr-hint">点击放大 · 扫一扫</span>
+                </div>
+            </div>
+        </div>
+        <p class="incentive-thanks">每一份支持都是继续更新的动力，感谢有你 🎉</p>
+    </section>
+</div>
+{% endblock %}

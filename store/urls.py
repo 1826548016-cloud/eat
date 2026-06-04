@@ -1,0 +1,71 @@
+from django.urls import path
+from . import views, social_views
+
+urlpatterns = [
+    path('preferences/', views.set_preferences, name='set_preferences'),
+    path('maintenance/', views.maintenance, name='maintenance'),
+    path('beta-gate/', views.beta_gate, name='beta_gate'),
+    path('', views.index, name='index'),
+
+    path('user/login/', views.user_login, name='user_login'),
+    path('user/appeal/', views.public_appeal, name='public_appeal'),
+    path('user/register/', views.user_register, name='user_register'),
+    path('user/logout/', views.user_logout, name='user_logout'),
+    path('auth/refresh/', views.jwt_refresh_user, name='jwt_refresh_user'),
+    path('user/center/', views.user_center, name='user_center'),
+    path('user/<int:user_id>/', views.user_profile, name='user_profile'),
+
+    path('disclaimer/', views.disclaimer, name='disclaimer'),
+    path('contact/', views.contact_admin, name='contact_admin'),
+    path('links/', views.friend_links, name='friend_links'),
+    path('wheel/', views.lunch_wheel, name='lunch_wheel'),
+    path('incentive/', views.incentive, name='incentive'),
+    path('posts/', views.post_list, name='post_list'),
+    path('post/<int:post_id>/', views.post_detail, name='post_detail'),
+    path('post/create/', views.post_create, name='post_create'),
+    path('post/<int:post_id>/edit/', social_views.post_edit, name='post_edit'),
+    path('post/<int:post_id>/delete/', views.post_delete, name='post_delete'),
+    path('user/favorites/', social_views.user_favorites, name='user_favorites'),
+    path('comment/<int:comment_id>/report/', social_views.report_comment, name='report_comment'),
+
+    path('admin-panel/login/', views.admin_login, name='admin_login'),
+    path('admin-panel/logout/', views.admin_logout, name='admin_logout'),
+    path('admin-panel/auth/refresh/', views.jwt_refresh_admin, name='jwt_refresh_admin'),
+    path('admin-panel/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+
+    path('admin-panel/users/', views.admin_user_list, name='admin_user_list'),
+    path('admin-panel/users/punish/<int:user_id>/', views.admin_user_punish, name='admin_user_punish'),
+    path('admin-panel/users/reset-password/<int:user_id>/', views.admin_user_reset_password, name='admin_user_reset_password'),
+    path('admin-panel/users/update-profile/<int:user_id>/', views.admin_user_update_profile, name='admin_user_update_profile'),
+    path('admin-panel/users/delete/<int:user_id>/', views.admin_user_delete, name='admin_user_delete'),
+
+    path('admin-panel/posts/', views.admin_post_list, name='admin_post_list'),
+    path('admin-panel/posts/edit/<int:post_id>/', social_views.admin_post_edit, name='admin_post_edit'),
+    path('admin-panel/posts/delete/<int:post_id>/', views.admin_post_delete, name='admin_post_delete'),
+    path('admin-panel/reports/', social_views.admin_report_list, name='admin_report_list'),
+    path('admin-panel/reports/<int:report_id>/handle/', social_views.admin_report_handle, name='admin_report_handle'),
+    path('admin-panel/staff/', social_views.admin_staff_list, name='admin_staff_list'),
+    path('admin-panel/staff/create/', social_views.admin_staff_create, name='admin_staff_create'),
+    path('admin-panel/staff/remove/<int:user_id>/', social_views.admin_staff_remove, name='admin_staff_remove'),
+    path('admin-panel/staff/reset-password/<int:user_id>/', social_views.admin_staff_reset_password, name='admin_staff_reset_password'),
+    path('admin-panel/comments/delete/<int:comment_id>/', views.admin_comment_delete, name='admin_comment_delete'),
+
+    path('admin-panel/categories/', views.admin_category_list, name='admin_category_list'),
+    path('admin-panel/categories/add/', views.admin_category_add, name='admin_category_add'),
+    path('admin-panel/categories/edit/<int:category_id>/', views.admin_category_edit, name='admin_category_edit'),
+    path('admin-panel/categories/delete/<int:category_id>/', views.admin_category_delete, name='admin_category_delete'),
+
+    path('admin-panel/announcements/', views.admin_announcement_list, name='admin_announcement_list'),
+    path('admin-panel/announcements/add/', views.admin_announcement_add, name='admin_announcement_add'),
+    path('admin-panel/announcements/edit/<int:announcement_id>/', views.admin_announcement_edit, name='admin_announcement_edit'),
+    path('admin-panel/announcements/delete/<int:announcement_id>/', views.admin_announcement_delete, name='admin_announcement_delete'),
+
+    path('admin-panel/contact/', views.admin_contact, name='admin_contact'),
+    path('admin-panel/friend-links/', views.admin_friend_link_list, name='admin_friend_link_list'),
+    path('admin-panel/friend-links/add/', views.admin_friend_link_add, name='admin_friend_link_add'),
+    path('admin-panel/friend-links/edit/<int:link_id>/', views.admin_friend_link_edit, name='admin_friend_link_edit'),
+    path('admin-panel/friend-links/delete/<int:link_id>/', views.admin_friend_link_delete, name='admin_friend_link_delete'),
+    path('admin-panel/profile/', views.admin_profile, name='admin_profile'),
+    path('admin-panel/logs/', views.admin_log_list, name='admin_log_list'),
+    path('admin-panel/logs/delete/<int:log_id>/', views.admin_log_delete, name='admin_log_delete'),
+]

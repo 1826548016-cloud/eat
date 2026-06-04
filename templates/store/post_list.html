@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}逛一逛 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="page-hero page-hero--compact">
+    <div class="container">
+        <h1>干饭情报</h1>
+        <p class="page-hero-lead">搜索店名、位置或描述，发现校园好味道</p>
+    </div>
+</div>
+
+<div class="container page-content">
+    <form method="get" class="search-bar search-bar--minimal">
+        <input type="text" name="q" value="{{ keyword }}" placeholder="搜索店名、位置、描述…">
+        <select name="category" aria-label="全部分类">
+            <option value="">全部分类</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if category_id == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">搜索</button>
+        {% if request.user.is_authenticated %}
+        <a href="{% url 'post_create' %}" class="btn btn-secondary">+ 发布情报</a>
+        {% endif %}
+    </form>
+
+    {% if posts %}
+    <div class="post-grid post-grid--clean">
+        {% for post in posts %}
+        <a href="{% url 'post_detail' post.id %}" class="post-card post-card--clean">
+            {% if post.cover_image %}
+            <div class="post-card-img"><img src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy"></div>
+            {% else %}
+            <div class="post-card-img post-card-placeholder">🍜</div>
+            {% endif %}
+            <div class="post-card-body">
+                <h3>{{ post.title }}</h3>
+                <p class="post-card-sub">{{ post.location }} · {% if post.price %}{{ post.price }}{% else %}—{% endif %}</p>
+                <p class="post-card-meta">{% if post.endorse_count %}👍 {{ post.endorse_count }}{% endif %} · @{{ post.author.username }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state glass text-center">
+        <p class="empty-icon">🔍</p>
+        <p>暂无匹配结果</p>
+        <a href="{% url 'post_list' %}" class="btn btn-secondary">查看全部</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

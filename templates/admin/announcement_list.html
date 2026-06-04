@@ -1,0 +1,74 @@
+{% extends 'admin_base.html' %}
+{% block title %}公告管理{% endblock %}
+{% block header %}📢 站点公告管理{% endblock %}
+{% block content %}
+<div class="card glass" style="margin-bottom:24px;">
+    <h3>发布新公告</h3>
+    <form method="post" action="{% url 'admin_announcement_add' %}" class="announcement-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>标题</label>
+            <input type="text" name="title" required maxlength="120">
+        </div>
+        <div class="form-group">
+            <label>内容</label>
+            <textarea name="content" rows="4" placeholder="公告正文…" required></textarea>
+        </div>
+        <div class="announcement-form-options">
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_active" value="1" checked> 立即展示
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_pinned" value="1"> 置顶显示
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">发布公告</button>
+    </form>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>标题</th><th>状态</th><th>发布人</th><th>时间</th><th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in announcements %}
+        <tr>
+            <td colspan="5" class="announcement-edit-row">
+                <form method="post" action="{% url 'admin_announcement_edit' a.id %}" class="announcement-edit-form">
+                    {% csrf_token %}
+                    <div class="announcement-edit-grid">
+                        <div class="form-group">
+                            <label>标题</label>
+                            <input type="text" name="title" value="{{ a.title }}" required maxlength="120">
+                        </div>
+                        <div class="form-group announcement-edit-meta">
+                            <span class="text-muted">{{ a.author.username|default:"—" }} · {{ a.created_at|date:"Y-m-d H:i" }}</span>
+                            {% if a.is_pinned %}<span class="badge badge-primary">置顶</span>{% endif %}
+                            {% if a.is_active %}<span class="badge badge-success">展示中</span>{% else %}<span class="badge badge-danger">已隐藏</span>{% endif %}
+                        </div>
+                        <div class="form-group announcement-edit-content">
+                            <label>内容</label>
+                            <textarea name="content" rows="3" required>{{ a.content }}</textarea>
+                        </div>
+                        <div class="announcement-form-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="is_active" value="1" {% if a.is_active %}checked{% endif %}> 展示
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="is_pinned" value="1" {% if a.is_pinned %}checked{% endif %}> 置顶
+                            </label>
+                            <button type="submit" class="btn btn-secondary btn-sm">保存</button>
+                            <a href="{% url 'admin_announcement_delete' a.id %}" class="btn btn-danger btn-sm" onclick="return confirm('确定删除该公告？');">删除</a>
+                        </div>
+                    </div>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center">暂无公告，可在上方发布</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

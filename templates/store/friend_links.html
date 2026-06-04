@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}友情链接 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container links-page">
+    <nav class="page-breadcrumb">
+        <a href="{% url 'index' %}">首页</a>
+        <span>/</span>
+        <span>友情链接</span>
+    </nav>
+
+    <header class="links-header">
+        <h1>友情链接</h1>
+        {% if page_intro %}
+        <p class="links-intro text-muted">{{ page_intro }}</p>
+        {% endif %}
+    </header>
+
+    {% if links %}
+    <div class="links-grid">
+        {% for link in links %}
+        <a href="{{ link.url }}" class="link-card glass" target="_blank" rel="noopener noreferrer">
+            <span class="link-card-icon" aria-hidden="true">{{ link.icon }}</span>
+            <span class="link-card-body">
+                <strong class="link-card-name">{{ link.name }}</strong>
+                {% if link.description %}
+                <span class="link-card-desc text-muted">{{ link.description }}</span>
+                {% endif %}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="links-empty glass">
+        <p>暂无友情链接，敬请期待。</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

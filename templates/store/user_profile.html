@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}{{ target_user.username }} 的主页 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container user-center-page">
+    <nav class="page-breadcrumb">
+        <a href="{% url 'index' %}">首页</a>
+        <span>/</span>
+        <span>用户主页</span>
+    </nav>
+    <h1>用户主页</h1>
+
+    <div class="glass user-profile-header">
+        <div class="user-profile-avatar">
+            {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="{{ target_user.username }}" class="user-avatar-img">
+            {% else %}
+            <span class="user-avatar-placeholder">{{ target_user.username|slice:":1"|upper }}</span>
+            {% endif %}
+        </div>
+        <div class="user-profile-info">
+            <h2>@{{ target_user.username }}</h2>
+            {% if profile.campus %}
+            <p class="user-profile-campus">{{ profile.campus }}</p>
+            {% endif %}
+            <p class="user-profile-joined">加入于 {{ target_user.date_joined|date:"Y-m-d" }}</p>
+        </div>
+        <div class="user-profile-stats">
+            <div class="user-stat-item">
+                <span class="user-stat-value">{{ post_count }}</span>
+                <span class="user-stat-label">干饭情报</span>
+            </div>
+            <div class="user-stat-item">
+                <span class="user-stat-value">{{ comment_count }}</span>
+                <span class="user-stat-label">评论</span>
+            </div>
+            <div class="user-stat-item">
+                <span class="user-stat-value">{{ endorse_given }}</span>
+                <span class="user-stat-label">推荐</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="my-posts-section">
+        <div class="section-head">
+            <h2>发布的干饭情报</h2>
+        </div>
+        {% if posts %}
+        <ul class="my-post-list glass">
+            {% for post in posts %}
+            <li>
+                <a href="{% url 'post_detail' post.id %}"><strong>{{ post.title }}</strong></a>
+                <span class="text-muted">{{ post.created_at|date:"Y-m-d" }} · {{ post.location }} · 👁 {{ post.view_count }} · 👍 {{ post.endorse_count }} · 💬 {{ post.comment_count }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">暂无发布的干饭情报</p>
+        {% endif %}
+    </div>
+
+    {% if recent_comments %}
+    <section class="comments-section glass" style="margin-top:20px;">
+        <h2>近期评论</h2>
+        <ul class="comment-list">
+            {% for c in recent_comments %}
+            <li class="comment-item">
+                <div class="comment-head">
+                    <span class="comment-time">{{ c.created_at|date:"m-d H:i" }}</span>
+                    <span>在 <a href="{% url 'post_detail' c.post.id %}">{{ c.post.title|truncatechars:20 }}</a> 中评论</span>
+                </div>
+                <p>{{ c.content|truncatechars:150 }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

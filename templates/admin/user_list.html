@@ -1,0 +1,101 @@
+{% extends 'admin_base.html' %}
+{% block title %}用户管理 - 管理后台{% endblock %}
+{% block header %}用户管理 · 违规处罚与账号维护{% endblock %}
+{% block content %}
+<p class="text-muted moderation-intro">封号将禁用账号并强制退出；禁言可登录浏览但不可发帖评论；限制登录将阻止前台登录。管理员可重置用户密码、更新邮箱与联系方式。</p>
+<div class="moderation-legend">
+    <span class="punish-badge punish-badge--ban">封号</span>
+    <span class="punish-badge punish-badge--mute">禁言</span>
+    <span class="punish-badge punish-badge--login">限制登录</span>
+</div>
+
+<table class="data-table user-moderation-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>用户名</th>
+            <th>处罚状态</th>
+            <th>邮箱</th>
+            <th>校区 / 院系</th>
+            <th>时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr class="{% if u.profile.is_banned %}row-banned{% endif %}">
+            <td>{{ u.id }}</td>
+            <td><strong>{{ u.username }}</strong></td>
+            <td>
+                {% if u.profile.is_banned %}<span class="punish-badge punish-badge--ban">封号</span>{% endif %}
+                {% if u.profile.is_muted %}<span class="punish-badge punish-badge--mute">禁言</span>{% endif %}
+                {% if u.profile.login_restricted %}<span class="punish-badge punish-badge--login">限制登录</span>{% endif %}
+                {% if not u.profile.is_banned and not u.profile.is_muted and not u.profile.login_restricted %}
+                <span class="text-muted">正常</span>
+                {% endif %}
+            </td>
+            <td>{{ u.email|default:"—" }}</td>
+            <td>{% if u.profile %}{{ u.profile.campus|default:"—" }}{% else %}—{% endif %}</td>
+            <td>{{ u.date_joined|date:"Y-m-d H:i" }}</td>
+            <td class="user-punish-cell">
+                <form method="post" action="{% url 'admin_user_punish' u.id %}" class="punish-form">
+                    {% csrf_token %}
+                    <input type="text" name="note" placeholder="处罚原因（可选）" maxlength="500" class="punish-note-input">
+                    <div class="punish-btns">
+                        {% if u.profile.is_banned %}
+                        <button type="submit" name="action" value="unban" class="btn btn-secondary btn-sm">解封</button>
+                        {% else %}
+                        <button type="submit" name="action" value="ban" class="btn btn-danger btn-sm" data-confirm="确定封号该用户？">封号</button>
+                        {% endif %}
+                        {% if u.profile.is_muted %}
+                        <button type="submit" name="action" value="unmute" class="btn btn-secondary btn-sm">解禁</button>
+                        {% else %}
+                        <button type="submit" name="action" value="mute" class="btn btn-warning btn-sm" data-confirm="确定禁言该用户？">禁言</button>
+                        {% endif %}
+                        {% if u.profile.login_restricted %}
+                        <button type="submit" name="action" value="allow_login" class="btn btn-secondary btn-sm">允许登录</button>
+                        {% else %}
+                        <button type="submit" name="action" value="restrict_login" class="btn btn-warning btn-sm" data-confirm="确定限制该用户登录？">限制登录</button>
+                        {% endif %}
+                    </div>
+                </form>
+                {% if u.profile.moderation_note %}
+                <p class="punish-note-display text-muted" title="{{ u.profile.moderation_note }}">{{ u.profile.moderation_note|truncatechars:40 }}</p>
+                {% endif %}
+
+                <details class="user-account-panel">
+                    <summary class="user-account-summary">账号维护</summary>
+                    <div class="user-account-forms">
+                        <form method="post" action="{% url 'admin_user_update_profile' u.id %}" class="admin-inline-form">
+                            {% csrf_token %}
+                            <p class="user-account-form-title">更新资料</p>
+                            <input type="email" name="email" value="{{ u.email }}" placeholder="邮箱" maxlength="254">
+                            <input type="text" name="phone" value="{{ u.profile.phone|default:'' }}" placeholder="手机号" maxlength="20">
+                            <input type="text" name="campus" value="{{ u.profile.campus|default:'' }}" placeholder="校区 / 院系" maxlength="100">
+                            <button type="submit" class="btn btn-secondary btn-sm">保存资料</button>
+                        </form>
+                        <form method="post" action="{% url 'admin_user_reset_password' u.id %}" class="admin-inline-form">
+                            {% csrf_token %}
+                            <p class="user-account-form-title">重置密码</p>
+                            <input type="password" name="new_password" required minlength="4" placeholder="新密码（至少4位）" autocomplete="new-password">
+                            <input type="password" name="new_password2" required minlength="4" placeholder="确认新密码" autocomplete="new-password">
+                            <button type="submit" class="btn btn-warning btn-sm" data-confirm="确定重置该用户密码？旧登录将失效。">重置密码</button>
+                        </form>
+                    </div>
+                </details>
+
+                <div class="user-extra-actions">
+                    <a href="{% url 'admin_log_list' %}?tab=login&q={{ u.username }}" class="btn btn-link btn-sm">登录日志</a>
+                    <form method="post" action="{% url 'admin_user_delete' u.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" data-confirm="确定删除该用户？此操作不可恢复。">删除</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center">暂无注册用户</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

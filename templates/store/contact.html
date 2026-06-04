@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}联系管理员 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container contact-page">
+    <nav class="page-breadcrumb">
+        <a href="{% url 'index' %}">首页</a>
+        <span>/</span>
+        <span>联系管理员</span>
+    </nav>
+
+    <header class="contact-header">
+        <h1>联系管理员</h1>
+        <p class="contact-intro text-muted">{{ contact_intro }}</p>
+    </header>
+
+    {% if has_contact_info %}
+    <div class="contact-cards">
+        {% for ch in contact_channels %}
+        <article class="contact-card glass">
+            <div class="contact-card-icon" aria-hidden="true">{{ ch.icon }}</div>
+            <div class="contact-card-body">
+                <h2 class="contact-card-label">{{ ch.label }}</h2>
+                {% if ch.href %}
+                <a href="{{ ch.href }}" class="contact-card-value"{% if ch.external %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ ch.value }}</a>
+                {% else %}
+                <p class="contact-card-value">{{ ch.value }}</p>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    <p class="contact-tip text-muted">请通过上述渠道联系站点管理员。举报违规、账号申诉时请说明用户名与具体情况。</p>
+    {% else %}
+    <div class="contact-empty glass">
+        <p>管理员尚未配置联系方式，请稍后再试。</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

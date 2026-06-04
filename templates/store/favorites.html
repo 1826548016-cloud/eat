@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}想吃清单 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container page-content">
+    <nav class="page-breadcrumb">
+        <a href="{% url 'index' %}">首页</a>
+        <span>/</span>
+        <a href="{% url 'user_center' %}">个人中心</a>
+        <span>/</span>
+        <span>想吃清单</span>
+    </nav>
+    <header class="page-hero page-hero--compact">
+        <h1>想吃清单</h1>
+        <p class="page-hero-lead">先马住，下课就去吃</p>
+    </header>
+    {% if favorites %}
+    <div class="post-grid post-grid--clean">
+        {% for fav in favorites %}
+        <a href="{% url 'post_detail' fav.post.id %}" class="post-card post-card--clean">
+            {% if fav.post.cover_image %}
+            <div class="post-card-img"><img src="{{ fav.post.cover_image.url }}" alt="{{ fav.post.title }}" loading="lazy"></div>
+            {% else %}
+            <div class="post-card-img post-card-placeholder">🍜</div>
+            {% endif %}
+            <div class="post-card-body">
+                <h3>{{ fav.post.title }}</h3>
+                <p class="post-card-sub">{{ fav.post.location }} · 收藏于 {{ fav.created_at|date:"m-d" }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state glass text-center">
+        <p>还没有收藏，去 <a href="{% url 'post_list' %}">逛一逛</a> 发现好吃的吧</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

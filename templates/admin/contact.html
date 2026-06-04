@@ -1,0 +1,64 @@
+{% extends 'admin_base.html' %}
+{% block title %}联系方式 - 管理后台{% endblock %}
+{% block header %}联系方式{% endblock %}
+{% block content %}
+<p class="text-muted moderation-intro">以下信息将展示在前台「联系管理员」页面，留空的渠道不会显示。</p>
+<form method="post" class="admin-form contact-admin-form">
+    {% csrf_token %}
+    <div class="panel glass contact-form-section">
+        <h3>页面说明</h3>
+        <div class="form-group">
+            <label>说明文字（中文）</label>
+            <textarea name="contact_intro_zh" rows="3">{{ site_config.contact_intro_zh }}</textarea>
+        </div>
+    </div>
+
+    <div class="panel glass contact-form-section">
+        <h3>社交与联系渠道</h3>
+        <div class="contact-fields-grid">
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" name="contact_email" value="{{ site_config.contact_email }}" placeholder="admin@example.com">
+            </div>
+            <div class="form-group">
+                <label>电话</label>
+                <input type="text" name="contact_phone" value="{{ site_config.contact_phone }}" maxlength="30" placeholder="13800000000">
+            </div>
+            <div class="form-group">
+                <label>微信</label>
+                <input type="text" name="contact_wechat" value="{{ site_config.contact_wechat }}" maxlength="80" placeholder="微信号或备注">
+            </div>
+            <div class="form-group">
+                <label>QQ</label>
+                <input type="text" name="contact_qq" value="{{ site_config.contact_qq }}" maxlength="30" placeholder="123456789">
+            </div>
+            <div class="form-group">
+                <label>Telegram</label>
+                <input type="text" name="contact_telegram" value="{{ site_config.contact_telegram }}" maxlength="80" placeholder="@username 或 https://t.me/...">
+            </div>
+            <div class="form-group">
+                <label>微博</label>
+                <input type="url" name="contact_weibo" value="{{ site_config.contact_weibo }}" placeholder="https://weibo.com/...">
+            </div>
+            <div class="form-group">
+                <label>小红书</label>
+                <input type="url" name="contact_xiaohongshu" value="{{ site_config.contact_xiaohongshu }}" placeholder="https://www.xiaohongshu.com/...">
+            </div>
+            <div class="form-group">
+                <label>GitHub</label>
+                <input type="url" name="contact_github" value="{{ site_config.contact_github }}" placeholder="https://github.com/...">
+            </div>
+            <div class="form-group">
+                <label>哔哩哔哩</label>
+                <input type="url" name="contact_bilibili" value="{{ site_config.contact_bilibili }}" placeholder="https://space.bilibili.com/...">
+            </div>
+        </div>
+        <p class="text-muted contact-form-hint">邮箱、电话、微信、QQ、Telegram 及微博、小红书、GitHub、B站链接均可选填。</p>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">保存联系方式</button>
+        <a href="{% url 'contact_admin' %}" class="btn btn-secondary" target="_blank">预览前台页面</a>
+    </div>
+</form>
+{% endblock %}

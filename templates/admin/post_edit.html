@@ -1,0 +1,66 @@
+{% extends 'admin_base.html' %}
+{% block title %}编辑推荐 - 管理后台{% endblock %}
+{% block header %}编辑推荐 · {{ post.title|truncatechars:24 }}{% endblock %}
+{% block content %}
+<p class="text-muted">作者：{{ post.author.username }} · 发布于 {{ post.created_at|date:"Y-m-d H:i" }}</p>
+<div class="form-card glass admin-post-edit-form">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>店名 / 菜品 *</label>
+            <input type="text" name="title" required maxlength="120" value="{{ post.title }}">
+        </div>
+        <div class="form-group">
+            <label>详细地址 *</label>
+            <input type="text" name="location" required maxlength="300" value="{{ post.location }}">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>分类</label>
+                <select name="category">
+                    <option value="">无</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if post.category_id == cat.id %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>价格</label>
+                <input type="text" name="price" maxlength="50" value="{{ post.price }}">
+            </div>
+        </div>
+        {% if post.photos.all %}
+        <div class="form-group">
+            <label>已有实拍（勾选删除）</label>
+            <div class="edit-photo-list">
+                {% for photo in post.photos.all %}
+                <label class="edit-photo-item">
+                    <input type="checkbox" name="remove_photos" value="{{ photo.id }}">
+                    <img src="{{ photo.image.url }}" alt="" loading="lazy">
+                    <span>删除</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <div class="form-group">
+            <label>追加实拍图</label>
+            <input type="file" name="photos" accept="image/*" multiple>
+        </div>
+        <div class="form-group">
+            <label>门头照片</label>
+            {% if post.storefront_image %}<p><img src="{{ post.storefront_image.url }}" alt="" class="edit-storefront-preview" loading="lazy"></p>{% endif %}
+            <input type="file" name="storefront_image" accept="image/*">
+        </div>
+        <div class="form-group">
+            <label>推荐理由 *</label>
+            <textarea name="description" rows="5" required>{{ post.description }}</textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="{% url 'admin_post_list' %}" class="btn btn-secondary">返回列表</a>
+            <a href="{% url 'post_detail' post.id %}" class="btn btn-link" target="_blank">前台预览</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

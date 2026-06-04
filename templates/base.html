@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ html_lang }}" data-theme="{{ site_theme }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+    (function () {
+        var t = localStorage.getItem('site_theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <title>{% block title %}干饭情报局 - 校园干饭情报{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="user-body{% if request.resolver_match.url_name == 'index' %} page-home{% endif %}">
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="{% url 'index' %}" class="logo">
+                <span class="logo-icon">🍜</span>
+                <span class="logo-text">干饭情报局</span>
+            </a>
+            {% include 'partials/preferences_bar.html' %}
+            <button type="button" class="nav-toggle-btn" id="navToggle" aria-label="打开菜单" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <nav class="main-nav" id="mainNav">
+                <a href="{% url 'index' %}">首页</a>
+                <a href="{% url 'post_list' %}">逛一逛</a>
+                <a href="{% url 'lunch_wheel' %}">大转盘</a>
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'post_create' %}" class="nav-highlight">分享午餐</a>
+                <a href="{% url 'user_center' %}">我的</a>
+                {% if request.user.is_staff %}
+                <a href="{% url 'admin_dashboard' %}" class="nav-admin-link">管理后台</a>
+                {% endif %}
+                <a href="{% url 'user_logout' %}">退出</a>
+                {% else %}
+                <a href="{% url 'user_login' %}">登录</a>
+                <a href="{% url 'user_register' %}" class="nav-cta">注册</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    {% if request.resolver_match.url_name != 'index' %}
+    <div class="site-disclaimer-bar">
+        <div class="container disclaimer-bar-inner">
+            <span>本站<strong>不接广告</strong>、<strong>不侵犯隐私</strong>、<strong>不恶意发布</strong>、<strong>禁止篡改本站信息</strong>；用户须对本人发布内容承担法律责任。</span>
+            <a href="{% url 'disclaimer' %}">免责声明</a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if site_announcements and request.resolver_match.url_name == 'index' %}
+    <div class="notice-bar">
+        <div class="container">
+            <section class="notice-panel" aria-label="站点公告">
+                <header class="notice-panel-head">
+                    <span class="notice-panel-label">公告</span>
+                    {% if site_announcements|length > 1 %}
+                    <span class="notice-panel-count">共 {{ site_announcements|length }} 条</span>
+                    {% endif %}
+                </header>
+                <div class="notice-panel-body">
+                    {% for ann in site_announcements %}
+                    <article class="notice-entry{% if ann.is_pinned %} notice-entry--pinned{% endif %}">
+                        <header class="notice-entry-head">
+                            {% if ann.is_pinned %}<span class="notice-pin">置顶</span>{% endif %}
+                            <strong>{{ ann.title }}</strong>
+                            <time>{{ ann.created_at|date:"Y-m-d" }}</time>
+                        </header>
+                        <p>{{ ann.content|linebreaksbr }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if messages %}
+    <div class="messages-toast" role="status">
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}">
+            <span>{{ message }}</span>
+            <button type="button" class="message-dismiss" aria-label="关闭">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="site-main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <p class="footer-logo">🍜 干饭情报局</p>
+                <p class="footer-desc">干饭情报局 — 大学生午餐互助社区，真实分享、互帮互助。</p>
+            </div>
+            <div class="footer-links">
+                <p class="footer-col-title">逛逛</p>
+                <a href="{% url 'index' %}">首页</a>
+                <a href="{% url 'post_list' %}">推荐列表</a>
+                <a href="{% url 'lunch_wheel' %}">午餐大转盘</a>
+            </div>
+            <div class="footer-links">
+                <p class="footer-col-title">账户</p>
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'user_center' %}">个人中心</a>
+                <a href="{% url 'post_create' %}">分享午餐</a>
+                {% else %}
+                <a href="{% url 'user_login' %}">登录</a>
+                <a href="{% url 'user_register' %}">注册</a>
+                {% endif %}
+                <a href="{% url 'disclaimer' %}">免责声明</a>
+                <a href="{% url 'contact_admin' %}">联系管理员</a>
+                <a href="{% url 'friend_links' %}">友情链接</a>
+                <a href="{% url 'incentive' %}" >创作激励</a>
+            </div>
+        </div>
+        
+        <div class="container footer-bottom">
+            <p>非商业 · 用户内容自负法律责任</p>
+            <p class="footer-icp">
+                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">豫ICP备2026020102号</a>
+            </p>
+        </div>
+    </footer>
+    {% block extra_js %}{% endblock %}
+    <script src="{% static 'js/site.js' %}"></script>
+</body>
+</html>

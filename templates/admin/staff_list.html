@@ -1,0 +1,85 @@
+{% extends 'admin_base.html' %}
+{% block title %}管理员管理 - 管理后台{% endblock %}
+{% block header %}管理员管理 · 超级管理员专用{% endblock %}
+{% block content %}
+<p class="text-muted moderation-intro">超级管理员可创建普通管理员。普通管理员可登录后台管理内容，但无法创建/移除管理员，也无法修改网站开关与内测设置。</p>
+
+<div class="panel glass admin-create-panel">
+    <h3>创建普通管理员</h3>
+    <form method="post" action="{% url 'admin_staff_create' %}" class="admin-staff-create-form">
+        {% csrf_token %}
+        <div class="admin-staff-create-grid">
+            <div class="form-group">
+                <label>用户名 *</label>
+                <input type="text" name="username" required maxlength="150" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" name="email" maxlength="254">
+            </div>
+            <div class="form-group">
+                <label>登录密码 *</label>
+                <input type="password" name="password" required minlength="4" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label>确认密码 *</label>
+                <input type="password" name="password2" required minlength="4" autocomplete="new-password">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">创建普通管理员</button>
+    </form>
+</div>
+
+<table class="data-table staff-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>用户名</th>
+            <th>角色</th>
+            <th>邮箱</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in staff_users %}
+        <tr>
+            <td>{{ s.id }}</td>
+            <td><strong>{{ s.username }}</strong>{% if s.id == request.user.id %} <span class="text-muted">(我)</span>{% endif %}</td>
+            <td>
+                {% if s.is_superuser %}
+                <span class="admin-role-badge admin-role-badge--super">超级管理员</span>
+                {% else %}
+                <span class="admin-role-badge">普通管理员</span>
+                {% endif %}
+            </td>
+            <td>{{ s.email|default:"—" }}</td>
+            <td>{{ s.date_joined|date:"Y-m-d H:i" }}</td>
+            <td class="user-punish-cell">
+                {% if not s.is_superuser %}
+                <details class="user-account-panel">
+                    <summary class="user-account-summary">重置密码</summary>
+                    <form method="post" action="{% url 'admin_staff_reset_password' s.id %}" class="admin-inline-form">
+                        {% csrf_token %}
+                        <input type="password" name="new_password" required minlength="4" placeholder="新密码" autocomplete="new-password">
+                        <input type="password" name="new_password2" required minlength="4" placeholder="确认新密码" autocomplete="new-password">
+                        <button type="submit" class="btn btn-warning btn-sm" data-confirm="确定重置该管理员密码？">重置密码</button>
+                    </form>
+                </details>
+                {% if s.id != request.user.id %}
+                <form method="post" action="{% url 'admin_staff_remove' s.id %}" class="staff-remove-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm" data-confirm="确定移除 {{ s.username }} 的管理员权限？">移除管理员</button>
+                </form>
+                {% endif %}
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center">暂无管理员</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

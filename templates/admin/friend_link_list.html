@@ -1,0 +1,105 @@
+{% extends 'admin_base.html' %}
+{% block title %}友链管理 - 管理后台{% endblock %}
+{% block header %}🔗 友情链接管理{% endblock %}
+{% block content %}
+<p class="text-muted moderation-intro">在此添加、编辑友链；仅「展示」状态的链接会出现在前台友链页。</p>
+
+<div class="panel glass contact-form-section" style="margin-bottom:20px;">
+    <h3>友链页说明</h3>
+    <form method="post" class="admin-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_intro">
+        <div class="form-group">
+            <textarea name="friend_links_intro" rows="2">{{ site_config.friend_links_intro }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-secondary btn-sm">保存说明</button>
+        <a href="{% url 'friend_links' %}" class="btn btn-link btn-sm" target="_blank">预览友链页</a>
+    </form>
+</div>
+
+<div class="card glass" style="margin-bottom:24px;">
+    <h3>添加友链</h3>
+    <form method="post" action="{% url 'admin_friend_link_add' %}" class="friend-link-form">
+        {% csrf_token %}
+        <div class="contact-fields-grid">
+            <div class="form-group">
+                <label>站点名称 *</label>
+                <input type="text" name="name" required maxlength="80" placeholder="如：某某博客">
+            </div>
+            <div class="form-group">
+                <label>链接地址 *</label>
+                <input type="url" name="url" required maxlength="500" placeholder="https://example.com">
+            </div>
+            <div class="form-group">
+                <label>简介</label>
+                <input type="text" name="description" maxlength="200" placeholder="一句话介绍（可选）">
+            </div>
+            <div class="form-group">
+                <label>图标</label>
+                <input type="text" name="icon" value="🔗" maxlength="20" style="width:80px;">
+            </div>
+            <div class="form-group">
+                <label>排序</label>
+                <input type="number" name="sort_order" value="0" style="width:100px;">
+            </div>
+        </div>
+        <div class="announcement-form-options">
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_active" value="1" checked> 立即展示
+            </label>
+            <button type="submit" class="btn btn-primary btn-sm">添加友链</button>
+        </div>
+    </form>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>图标</th><th>站点</th><th>链接</th><th>状态</th><th>排序</th><th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for link in links %}
+        <tr>
+            <td colspan="6" class="announcement-edit-row">
+                <form method="post" action="{% url 'admin_friend_link_edit' link.id %}" class="friend-link-edit-form">
+                    {% csrf_token %}
+                    <div class="contact-fields-grid">
+                        <div class="form-group">
+                            <label>站点名称</label>
+                            <input type="text" name="name" value="{{ link.name }}" required maxlength="80">
+                        </div>
+                        <div class="form-group">
+                            <label>链接</label>
+                            <input type="url" name="url" value="{{ link.url }}" required maxlength="500">
+                        </div>
+                        <div class="form-group">
+                            <label>简介</label>
+                            <input type="text" name="description" value="{{ link.description }}" maxlength="200">
+                        </div>
+                        <div class="form-group">
+                            <label>图标</label>
+                            <input type="text" name="icon" value="{{ link.icon }}" maxlength="20" style="width:80px;">
+                        </div>
+                        <div class="form-group">
+                            <label>排序</label>
+                            <input type="number" name="sort_order" value="{{ link.sort_order }}" style="width:100px;">
+                        </div>
+                    </div>
+                    <div class="announcement-form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="is_active" value="1" {% if link.is_active %}checked{% endif %}> 展示
+                        </label>
+                        <button type="submit" class="btn btn-secondary btn-sm">保存</button>
+                        <a href="{{ link.url }}" class="btn btn-link btn-sm" target="_blank" rel="noopener noreferrer">访问</a>
+                        <a href="{% url 'admin_friend_link_delete' link.id %}" class="btn btn-danger btn-sm" data-confirm="确定删除该友链？">删除</a>
+                    </div>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted">暂无友链，可在上方添加</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

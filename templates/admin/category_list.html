@@ -1,0 +1,42 @@
+{% extends 'admin_base.html' %}
+{% block title %}分类管理{% endblock %}
+{% block header %}🏷️ 情报分类管理{% endblock %}
+{% block content %}
+<div class="card glass" style="margin-bottom:24px;">
+    <h3>添加分类</h3>
+    <form method="post" action="{% url 'admin_category_add' %}" class="inline-form">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="分类名" required>
+        <input type="text" name="icon" placeholder="图标 emoji" value="🍱">
+        <input type="number" name="sort_order" placeholder="排序" value="0">
+        <button type="submit" class="btn btn-primary btn-sm">添加</button>
+    </form>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr><th>图标</th><th>名称</th><th>推荐数</th><th>排序</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+        {% for c in categories %}
+        <tr>
+            <td>{{ c.icon }}</td>
+            <td>
+                <form method="post" action="{% url 'admin_category_edit' c.id %}" class="inline-form">
+                    {% csrf_token %}
+                    <input type="text" name="name" value="{{ c.name }}" required>
+                    <input type="text" name="icon" value="{{ c.icon }}" style="width:60px;">
+                    <input type="number" name="sort_order" value="{{ c.sort_order }}" style="width:70px;">
+                    <button type="submit" class="btn btn-secondary btn-sm">保存</button>
+                </form>
+            </td>
+            <td>{{ c.post_count }}</td>
+            <td>{{ c.sort_order }}</td>
+            <td>
+                <a href="{% url 'admin_category_delete' c.id %}" class="btn btn-danger btn-sm" onclick="return confirm('删除分类？');">删除</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

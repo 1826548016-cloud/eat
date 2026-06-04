@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}登录 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="page-auth">
+    <div class="login-card glass">
+        <div class="login-header">
+            <span class="login-logo">🍜</span>
+            <h1>欢迎回来</h1>
+            <p>登录后继续分享和评论</p>
+        </div>
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" name="username" required autocomplete="username" {% if blocked_user %}value="{{ blocked_user }}"{% endif %}>
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" name="password" required autocomplete="current-password">
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button type="submit" class="btn btn-primary" style="flex:1;">登录</button>
+                <button type="button" class="btn btn-secondary" onclick="location.reload();" title="刷新页面">🔄 刷新</button>
+            </div>
+        </form>
+        {% if blocked_user %}
+        <div class="appeal-prompt" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-divider);">
+            <p class="appeal-title" style="font-weight:600;margin-bottom:8px;">🙋 账号受限？</p>
+            <p class="text-muted" style="font-size:13px;margin-bottom:10px;">您的账号因违规已被限制登录。如有异议，可提交申诉，管理员会尽快处理。</p>
+            <details>
+                <summary class="btn btn-warning btn-sm" style="cursor:pointer;display:inline-flex;">我要申诉</summary>
+                <form method="post" action="{% url 'public_appeal' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="username" value="{{ blocked_user }}">
+                    <div class="form-group">
+                        <textarea name="detail" rows="3" required minlength="10" maxlength="1000" placeholder="请说明申诉理由（至少10字）" style="width:100%;padding:8px 12px;border:1px solid var(--gray-border);border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);resize:vertical;"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">提交申诉</button>
+                </form>
+            </details>
+        </div>
+        {% endif %}
+        <div class="login-footer">
+            <p>还没有账号？<a href="{% url 'user_register' %}">立即注册</a></p>
+            <p><a href="{% url 'contact_admin' %}">忘记密码？联系管理员</a></p>
+            <p><a href="{% url 'admin_login' %}">管理员登录</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

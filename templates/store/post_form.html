@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}编辑推荐{% else %}发布情报{% endif %} - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container form-page">
+    <nav class="page-breadcrumb">
+        <a href="{% url 'index' %}">首页</a>
+        <span>/</span>
+        {% if is_edit %}
+        <a href="{% url 'post_detail' post.id %}">{{ post.title|truncatechars:12 }}</a>
+        <span>/</span>
+        <span>编辑</span>
+        {% else %}
+        <span>发布情报</span>
+        {% endif %}
+    </nav>
+    <div class="form-card glass">
+        <h1>{% if is_edit %}编辑推荐{% else %}发布干饭情报{% endif %}</h1>
+        <p class="text-muted">写清详细地址、上传实拍与门头照片，帮更多同学少纠结一分钟</p>
+        <form method="post" enctype="multipart/form-data" class="post-upload-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>店名 / 菜品 *</label>
+                <input type="text" name="title" required maxlength="120" value="{{ post.title|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label>详细地址 *</label>
+                <input type="text" name="location" required maxlength="300" placeholder="如：北门美食街3号铺、一食堂二楼东侧窗口" value="{{ post.location|default:'' }}">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>分类</label>
+                    <select name="category">
+                        <option value="">选分类（可选）</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if post.category_id == cat.id %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>价格 / 人均</label>
+                    <input type="text" name="price" maxlength="50" value="{{ post.price|default:'' }}">
+                </div>
+            </div>
+            {% if is_edit and post.photos.all %}
+            <div class="form-group">
+                <label>已有实拍（勾选删除）</label>
+                <div class="edit-photo-list">
+                    {% for photo in post.photos.all %}
+                    <label class="edit-photo-item">
+                        <input type="checkbox" name="remove_photos" value="{{ photo.id }}">
+                        <img src="{{ photo.image.url }}" alt="" loading="lazy">
+                        <span>删除</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            <div class="form-group">
+                <label>{% if is_edit %}追加实拍图{% else %}实拍图（可选，最多 {{ max_photos|default:9 }} 张）{% endif %}</label>
+                <input type="file" name="photos" accept="image/*" multiple>
+                <p class="form-hint text-muted">可多选上传菜品、环境等实拍照片</p>
+            </div>
+            <div class="form-group">
+                <label>商家门头照片{% if is_edit %}（重新上传将覆盖）{% else %}（可选）{% endif %}</label>
+                {% if is_edit and post.storefront_image %}
+                <p><img src="{{ post.storefront_image.url }}" alt="" class="edit-storefront-preview" loading="lazy"></p>
+                {% endif %}
+                <input type="file" name="storefront_image" accept="image/*">
+                <p class="form-hint text-muted">便于其他同学按门头找店</p>
+            </div>
+            <div class="form-group">
+                <label>推荐理由 *</label>
+                <textarea name="description" rows="5" required>{{ post.description|default:'' }}</textarea>
+            </div>
+            {% if not is_edit %}
+            <div class="form-group agree-box">
+                <label class="agree-label">
+                    <input type="checkbox" name="agree_disclaimer" value="1" required>
+                    {% url 'disclaimer' as disclaimer_url %}
+                    我确认内容真实、非商业广告，不侵犯他人隐私、不篡改本站信息，并同意 <a href="{{ disclaimer_url }}" target="_blank">《免责声明》</a>，对本次发布承担法律责任
+                </label>
+            </div>
+            {% endif %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{% if is_edit %}保存修改{% else %}发布推荐{% endif %}</button>
+                {% if is_edit %}
+                <a href="{% url 'post_detail' post.id %}" class="btn btn-secondary">取消</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
