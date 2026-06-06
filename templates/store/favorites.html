@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load store_tags %}
 {% block title %}想吃清单 - 干饭情报局{% endblock %}
 {% block content %}
 <div class="container page-content">
@@ -18,7 +19,7 @@
         {% for fav in favorites %}
         <a href="{% url 'post_detail' fav.post.id %}" class="post-card post-card--clean">
             {% if fav.post.cover_image %}
-            <div class="post-card-img"><img src="{{ fav.post.cover_image.url }}" alt="{{ fav.post.title }}" loading="lazy"></div>
+            <div class="post-card-img"><img src="{{ fav.post|cover_thumb }}" alt="{{ fav.post.title }}" loading="lazy" decoding="async" width="400" height="300"></div>
             {% else %}
             <div class="post-card-img post-card-placeholder">🍜</div>
             {% endif %}

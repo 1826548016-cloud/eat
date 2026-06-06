@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, social_views
+from . import views, social_views, notification_views
 
 urlpatterns = [
     path('preferences/', views.set_preferences, name='set_preferences'),
@@ -26,6 +26,10 @@ urlpatterns = [
     path('post/<int:post_id>/edit/', social_views.post_edit, name='post_edit'),
     path('post/<int:post_id>/delete/', views.post_delete, name='post_delete'),
     path('user/favorites/', social_views.user_favorites, name='user_favorites'),
+    path('notifications/', notification_views.notification_list, name='notification_list'),
+    path('notifications/mark-read/<int:notification_id>/', notification_views.mark_read, name='notification_mark_read'),
+    path('notifications/mark-all-read/', notification_views.mark_all_read, name='notification_mark_all_read'),
+    path('notifications/api/unread/', notification_views.unread_count_api, name='notification_unread_api'),
     path('comment/<int:comment_id>/report/', social_views.report_comment, name='report_comment'),
 
     path('admin-panel/login/', views.admin_login, name='admin_login'),

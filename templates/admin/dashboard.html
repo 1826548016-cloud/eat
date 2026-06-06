@@ -3,80 +3,82 @@
 {% block header %}概览{% endblock %}
 {% block content %}
 {% if is_super_admin %}
-<div class="panel glass site-control-panel">
-    <div class="panel-head">
-        <h3>网站开关</h3>
-        {% if site_config.is_site_open %}
-        <span class="badge badge-success">已开放</span>
-        {% else %}
-        <span class="badge badge-danger">已关闭</span>
-        {% endif %}
-    </div>
-    <div class="site-control-body">
-        <p class="text-muted">{% if site_config.is_site_open %}网站正常运行，所有用户可访问、注册与登录。{% else %}网站已关闭，访客将看到维护页，仅管理员可登录后台。{% endif %}</p>
-        <form method="post" class="site-toggle-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="toggle_site">
+<div class="admin-controls-grid">
+    <div class="panel glass site-control-panel">
+        <div class="panel-head">
+            <h3>网站开关</h3>
             {% if site_config.is_site_open %}
-            <button type="submit" class="btn btn-danger" data-confirm="确定关闭网站？关闭后普通用户无法访问。">一键关闭网站</button>
+            <span class="badge badge-success">已开放</span>
             {% else %}
-            <button type="submit" class="btn btn-primary" data-confirm="确定重新开放网站？">重新开放网站</button>
+            <span class="badge badge-danger">已关闭</span>
             {% endif %}
-        </form>
-        <form method="post" class="closed-message-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="update_closed_message">
-            <div class="form-group">
-                <label>关站说明</label>
-                <textarea name="closed_message_zh" rows="2">{{ site_config.closed_message_zh }}</textarea>
-            </div>
-            <button type="submit" class="btn btn-secondary btn-sm">保存关站说明</button>
-        </form>
-    </div>
-</div>
-
-<div class="panel glass site-control-panel beta-control-panel">
-    <div class="panel-head">
-        <h3>内测模式</h3>
-        {% if site_config.is_beta_mode %}
-        <span class="badge badge-primary">内测中</span>
-        {% else %}
-        <span class="badge badge-success">已关闭</span>
-        {% endif %}
-    </div>
-    <div class="site-control-body">
-        <p class="text-muted">{% if site_config.is_beta_mode %}访客须输入邀请码才能浏览与注册；管理员不受限制。{% else %}关闭后所有用户可直接访问，无需邀请码。{% endif %}</p>
-        <form method="post" class="site-toggle-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="toggle_beta">
-            {% if site_config.is_beta_mode %}
-            <button type="submit" class="btn btn-secondary" data-confirm="确定关闭内测？所有用户将无需邀请码。">关闭内测模式</button>
-            {% else %}
-            <button type="submit" class="btn btn-primary" data-confirm="确定开启内测？将自动生成邀请码。">开启内测模式</button>
-            {% endif %}
-        </form>
-        {% if site_config.is_beta_mode %}
-        <div class="beta-code-display">
-            <p class="beta-code-label">当前邀请码</p>
-            <code class="beta-code-value">{{ site_config.beta_invite_code }}</code>
-            <p class="text-muted beta-code-tip">请妥善分发；修改或重新生成后旧码失效。</p>
         </div>
-        <form method="post" class="closed-message-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="update_beta_code">
-            <div class="form-group">
-                <label>自定义邀请码</label>
-                <input type="text" name="beta_invite_code" value="{{ site_config.beta_invite_code }}"
-                       maxlength="32" placeholder="至少 4 位字母或数字" style="text-transform:uppercase;">
+        <div class="site-control-body">
+            <p class="text-muted">{% if site_config.is_site_open %}网站正常运行，所有用户可访问、注册与登录。{% else %}网站已关闭，访客将看到维护页，仅管理员可登录后台。{% endif %}</p>
+            <form method="post" class="site-toggle-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_site">
+                {% if site_config.is_site_open %}
+                <button type="submit" class="btn btn-danger" data-confirm="确定关闭网站？关闭后普通用户无法访问。">一键关闭网站</button>
+                {% else %}
+                <button type="submit" class="btn btn-primary" data-confirm="确定重新开放网站？">重新开放网站</button>
+                {% endif %}
+            </form>
+            <form method="post" class="closed-message-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_closed_message">
+                <div class="form-group">
+                    <label>关站说明</label>
+                    <textarea name="closed_message_zh" rows="2">{{ site_config.closed_message_zh }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-sm">保存关站说明</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="panel glass site-control-panel beta-control-panel">
+        <div class="panel-head">
+            <h3>内测模式</h3>
+            {% if site_config.is_beta_mode %}
+            <span class="badge badge-primary">内测中</span>
+            {% else %}
+            <span class="badge badge-success">已关闭</span>
+            {% endif %}
+        </div>
+        <div class="site-control-body">
+            <p class="text-muted">{% if site_config.is_beta_mode %}访客须输入邀请码才能浏览与注册；管理员不受限制。{% else %}关闭后所有用户可直接访问，无需邀请码。{% endif %}</p>
+            <form method="post" class="site-toggle-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_beta">
+                {% if site_config.is_beta_mode %}
+                <button type="submit" class="btn btn-secondary" data-confirm="确定关闭内测？所有用户将无需邀请码。">关闭内测模式</button>
+                {% else %}
+                <button type="submit" class="btn btn-primary" data-confirm="确定开启内测？将自动生成邀请码。">开启内测模式</button>
+                {% endif %}
+            </form>
+            {% if site_config.is_beta_mode %}
+            <div class="beta-code-display">
+                <p class="beta-code-label">当前邀请码</p>
+                <code class="beta-code-value">{{ site_config.beta_invite_code }}</code>
+                <p class="text-muted beta-code-tip">请妥善分发；修改或重新生成后旧码失效。</p>
             </div>
-            <button type="submit" class="btn btn-secondary btn-sm">保存邀请码</button>
-        </form>
-        <form method="post" style="margin-top:10px;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="regenerate_beta_code">
-            <button type="submit" class="btn btn-link btn-sm" data-confirm="重新生成后旧邀请码将失效，确定？">随机生成新邀请码</button>
-        </form>
-        {% endif %}
+            <form method="post" class="closed-message-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_beta_code">
+                <div class="form-group">
+                    <label>自定义邀请码</label>
+                    <input type="text" name="beta_invite_code" value="{{ site_config.beta_invite_code }}"
+                           maxlength="32" placeholder="至少 4 位字母或数字" style="text-transform:uppercase;">
+                </div>
+                <button type="submit" class="btn btn-secondary btn-sm">保存邀请码</button>
+            </form>
+            <form method="post" style="margin-top:10px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="regenerate_beta_code">
+                <button type="submit" class="btn btn-link btn-sm" data-confirm="重新生成后旧邀请码将失效，确定？">随机生成新邀请码</button>
+            </form>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% else %}
@@ -159,51 +161,53 @@
     </div>
 </div>
 
-<div class="panel glass">
-    <div class="panel-head">
-        <h3>最新公告</h3>
-        <a href="{% url 'admin_announcement_list' %}" class="btn btn-primary btn-sm">管理公告</a>
+<div class="admin-recent-grid">
+    <div class="panel glass">
+        <div class="panel-head">
+            <h3>最新公告</h3>
+            <a href="{% url 'admin_announcement_list' %}" class="btn btn-primary btn-sm">管理公告</a>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr><th>标题</th><th>状态</th><th>发布人</th><th>时间</th></tr>
+            </thead>
+            <tbody>
+                {% for a in recent_announcements %}
+                <tr>
+                    <td>{{ a.title }}</td>
+                    <td>{% if a.is_active %}<span class="badge badge-success">展示</span>{% else %}<span class="badge badge-danger">隐藏</span>{% endif %}{% if a.is_pinned %} <span class="badge badge-primary">置顶</span>{% endif %}</td>
+                    <td>{{ a.author.username|default:"—" }}</td>
+                    <td>{{ a.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">暂无公告</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    <table class="data-table">
-        <thead>
-            <tr><th>标题</th><th>状态</th><th>发布人</th><th>时间</th></tr>
-        </thead>
-        <tbody>
-            {% for a in recent_announcements %}
-            <tr>
-                <td>{{ a.title }}</td>
-                <td>{% if a.is_active %}<span class="badge badge-success">展示</span>{% else %}<span class="badge badge-danger">隐藏</span>{% endif %}{% if a.is_pinned %} <span class="badge badge-primary">置顶</span>{% endif %}</td>
-                <td>{{ a.author.username|default:"—" }}</td>
-                <td>{{ a.created_at|date:"Y-m-d H:i" }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="4" class="text-center text-muted">暂无公告</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
 
-<div class="panel glass">
-    <div class="panel-head">
-        <h3>最新推荐</h3>
-        <a href="{% url 'admin_post_list' %}" class="btn btn-secondary btn-sm">管理推荐</a>
+    <div class="panel glass">
+        <div class="panel-head">
+            <h3>最新推荐</h3>
+            <a href="{% url 'admin_post_list' %}" class="btn btn-secondary btn-sm">管理推荐</a>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr><th>标题</th><th>位置</th><th>发布人</th><th>时间</th></tr>
+            </thead>
+            <tbody>
+                {% for p in recent_posts %}
+                <tr>
+                    <td><a href="{% url 'post_detail' p.id %}" target="_blank">{{ p.title }}</a></td>
+                    <td>{{ p.location }}</td>
+                    <td>{{ p.author.username }}</td>
+                    <td>{{ p.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">暂无数据</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    <table class="data-table">
-        <thead>
-            <tr><th>标题</th><th>位置</th><th>发布人</th><th>时间</th></tr>
-        </thead>
-        <tbody>
-            {% for p in recent_posts %}
-            <tr>
-                <td><a href="{% url 'post_detail' p.id %}" target="_blank">{{ p.title }}</a></td>
-                <td>{{ p.location }}</td>
-                <td>{{ p.author.username }}</td>
-                <td>{{ p.created_at|date:"Y-m-d H:i" }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="4" class="text-center text-muted">暂无数据</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </div>
 {% endblock %}

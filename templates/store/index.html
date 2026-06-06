@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static store_tags %}
 {% block title %}干饭情报局 - 校园干饭情报{% endblock %}
 {% block content %}
 <div class="home-page">
@@ -28,7 +28,7 @@
             <a href="{% url 'post_detail' today_pick.id %}" class="home-hero-pick">
                 <span class="home-hero-pick-label">今日推荐</span>
                 {% if today_pick.cover_image %}
-                <div class="home-hero-pick-img"><img src="{{ today_pick.cover_image.url }}" alt="{{ today_pick.title }}" loading="lazy"></div>
+                <div class="home-hero-pick-img"><img src="{{ today_pick|cover_thumb }}" alt="{{ today_pick.title }}" loading="lazy" decoding="async" width="400" height="300"></div>
                 {% else %}
                 <div class="home-hero-pick-img home-hero-pick-placeholder">🍜</div>
                 {% endif %}
@@ -79,7 +79,7 @@
                 {% for post in posts %}
                 <a href="{% url 'post_detail' post.id %}" class="post-card post-card--clean">
             {% if post.cover_image %}
-            <div class="post-card-img"><img src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy"></div>
+            <div class="post-card-img"><img src="{{ post|cover_thumb }}" alt="{{ post.title }}" loading="lazy" decoding="async" width="400" height="300"></div>
                     {% else %}
                     <div class="post-card-img post-card-placeholder">🍱</div>
                     {% endif %}
@@ -87,7 +87,10 @@
                         <h3>{{ post.title }}</h3>
                         <p class="post-card-sub">{{ post.location }} · {% if post.price %}{{ post.price }}{% else %}价格未标注{% endif %}</p>
                         {% if post.endorse_count %}<p class="post-card-meta">👍 {{ post.endorse_count }}</p>{% endif %}
-                        <p class="post-card-author">@{{ post.author.username }}</p>
+                        <p class="post-card-author">
+                            {% if post.author.profile.avatar %}<img src="{{ post.author.profile.avatar.url }}" alt="" class="avatar avatar--18">{% else %}<span class="avatar avatar--placeholder avatar--18">{{ post.author.username|slice:":1"|upper }}</span>{% endif %}
+                            @{{ post.author.username }}
+                        </p>
                     </div>
                 </a>
                 {% endfor %}

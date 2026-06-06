@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load store_tags %}
 {% block title %}{{ post.title }} - 干饭情报局{% endblock %}
 {% block content %}
 <div class="container post-detail-page">
@@ -19,7 +20,14 @@
                 <span class="detail-tag">💰 {% if post.price %}{{ post.price }}{% else %}价格未标注{% endif %}</span>
             </div>
             <p class="author-line">
-                <a href="{% url 'user_profile' post.author.id %}">@{{ post.author.username }}</a>
+                <a href="{% url 'user_profile' post.author.id %}" class="author-link">
+                    {% if post.author.profile.avatar %}
+                    <img src="{{ post.author.profile.avatar.url }}" alt="" class="avatar avatar--28">
+                    {% else %}
+                    <span class="avatar avatar--placeholder avatar--28">{{ post.author.username|slice:":1"|upper }}</span>
+                    {% endif %}
+                    @{{ post.author.username }}
+                </a>
                 <span>{{ post.created_at|date:"Y-m-d H:i" }}</span>
                 <span>👁 {{ post.view_count }} 浏览</span>
                 <span>👍 {{ post.endorse_count }} 推荐</span>
@@ -84,7 +92,7 @@
                 <div class="post-photo-grid">
                     {% for photo in post.photos.all %}
                     <figure class="post-photo-item">
-                        <img src="{{ photo.image.url }}" alt="{{ post.title }} 实拍图 {{ forloop.counter }}" loading="lazy">
+                        <img src="{{ photo.image.url }}" alt="{{ post.title }} 实拍图 {{ forloop.counter }}" loading="lazy" decoding="async">
                     </figure>
                     {% endfor %}
                 </div>
@@ -94,7 +102,7 @@
                 <h2 class="post-media-title">实拍图</h2>
                 <div class="post-photo-grid">
                     <figure class="post-photo-item">
-                        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy">
+                        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy" decoding="async">
                     </figure>
                 </div>
             </section>
@@ -103,7 +111,7 @@
             <section class="post-storefront">
                 <h2 class="post-media-title">商家门头</h2>
                 <figure class="post-storefront-img">
-                    <img src="{{ post.storefront_image.url }}" alt="{{ post.title }} 门头照片" loading="lazy">
+                    <img src="{{ post.storefront_image.url }}" alt="{{ post.title }} 门头照片" loading="lazy" decoding="async">
                 </figure>
             </section>
             {% endif %}
@@ -118,6 +126,13 @@
             {% for c in comments %}
             <li class="comment-item{% if c.parent %} comment-item--reply{% endif %}" id="comment-{{ c.id }}">
                 <div class="comment-head">
+                    <a href="{% url 'user_profile' c.user.id %}" class="comment-avatar-link">
+                        {% if c.user.profile.avatar %}
+                        <img src="{{ c.user.profile.avatar.url }}" alt="" class="avatar avatar--24">
+                        {% else %}
+                        <span class="avatar avatar--placeholder avatar--24">{{ c.user.username|slice:":1"|upper }}</span>
+                        {% endif %}
+                    </a>
                     <a href="{% url 'user_profile' c.user.id %}"><strong>@{{ c.user.username }}</strong></a>
                     {% if c.parent %}<span class="comment-reply-to">回复 <a href="{% url 'user_profile' c.parent.user.id %}">@{{ c.parent.user.username }}</a></span>{% endif %}
                     <span class="comment-time">{{ c.created_at|date:"m-d H:i" }}</span>

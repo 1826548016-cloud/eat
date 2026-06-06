@@ -16,10 +16,10 @@
 </head>
 <body class="admin-body">
     <div class="admin-layout">
-        <aside class="admin-sidebar">
+        <aside class="admin-sidebar" id="adminSidebar">
             <div class="sidebar-logo">
                 <div class="sidebar-logo-row">
-                    <div>
+                    <div class="sidebar-brand">
                         <h2>🍜 干饭情报局</h2>
                         <p>管理后台</p>
                     </div>
@@ -30,28 +30,42 @@
             </div>
             <div class="sidebar-prefs">{% include 'partials/preferences_bar.html' %}</div>
             <nav class="sidebar-nav" id="adminSidebarNav">
-                <a href="{% url 'admin_dashboard' %}" class="nav-item {% if section == 'dashboard' %}active{% endif %}">📊 概览</a>
-                <a href="{% url 'admin_post_list' %}" class="nav-item {% if section == 'posts' %}active{% endif %}">🍱 推荐管理</a>
-                <a href="{% url 'admin_report_list' %}" class="nav-item {% if section == 'reports' %}active{% endif %}">🚩 举报申诉{% if admin_pending_reports %} <span class="nav-badge">{{ admin_pending_reports }}</span>{% endif %}</a>
-                <a href="{% url 'admin_category_list' %}" class="nav-item {% if section == 'categories' %}active{% endif %}">🏷️ 分类管理</a>
-                <a href="{% url 'admin_announcement_list' %}" class="nav-item {% if section == 'announcements' %}active{% endif %}">📢 公告管理</a>
-                <a href="{% url 'admin_user_list' %}" class="nav-item {% if section == 'users' %}active{% endif %}">👤 用户管理</a>
-                {% if request.user.is_superuser %}
-                <a href="{% url 'admin_staff_list' %}" class="nav-item {% if section == 'staff' %}active{% endif %}">🛡️ 管理员</a>
-                {% endif %}
-                <a href="{% url 'admin_contact' %}" class="nav-item {% if section == 'contact' %}active{% endif %}">📬 联系方式</a>
-                <a href="{% url 'admin_friend_link_list' %}" class="nav-item {% if section == 'friend_links' %}active{% endif %}">🔗 友链管理</a>
-                <a href="{% url 'admin_log_list' %}" class="nav-item {% if section == 'logs' %}active{% endif %}">📋 日志管理</a>
-                <a href="{% url 'admin_profile' %}" class="nav-item {% if section == 'profile' %}active{% endif %}">⚙️ 个人中心</a>
-                <a href="{% url 'index' %}" class="nav-item" target="_blank">🏠 返回前台</a>
+                <div class="nav-group">
+                    <a href="{% url 'admin_dashboard' %}" class="nav-item {% if section == 'dashboard' %}active{% endif %}">📊 概览</a>
+                </div>
+                <div class="nav-group">
+                    <span class="nav-group-title">内容管理</span>
+                    <a href="{% url 'admin_post_list' %}" class="nav-item {% if section == 'posts' %}active{% endif %}">🍱 推荐管理</a>
+                    <a href="{% url 'admin_report_list' %}" class="nav-item {% if section == 'reports' %}active{% endif %}">🚩 举报申诉{% if admin_pending_reports %} <span class="nav-badge">{{ admin_pending_reports }}</span>{% endif %}</a>
+                    <a href="{% url 'admin_category_list' %}" class="nav-item {% if section == 'categories' %}active{% endif %}">🏷️ 分类管理</a>
+                    <a href="{% url 'admin_announcement_list' %}" class="nav-item {% if section == 'announcements' %}active{% endif %}">📢 公告管理</a>
+                </div>
+                <div class="nav-group">
+                    <span class="nav-group-title">用户与权限</span>
+                    <a href="{% url 'admin_user_list' %}" class="nav-item {% if section == 'users' %}active{% endif %}">👤 用户管理</a>
+                    {% if request.user.is_superuser %}
+                    <a href="{% url 'admin_staff_list' %}" class="nav-item {% if section == 'staff' %}active{% endif %}">🛡️ 管理员</a>
+                    {% endif %}
+                </div>
+                <div class="nav-group">
+                    <span class="nav-group-title">站点设置</span>
+                    <a href="{% url 'admin_contact' %}" class="nav-item {% if section == 'contact' %}active{% endif %}">📬 联系方式</a>
+                    <a href="{% url 'admin_friend_link_list' %}" class="nav-item {% if section == 'friend_links' %}active{% endif %}">🔗 友链管理</a>
+                    <a href="{% url 'admin_log_list' %}" class="nav-item {% if section == 'logs' %}active{% endif %}">📋 日志管理</a>
+                    <a href="{% url 'admin_profile' %}" class="nav-item {% if section == 'profile' %}active{% endif %}">⚙️ 个人中心</a>
+                </div>
+                <div class="nav-group nav-group--footer">
+                    <a href="{% url 'index' %}" class="nav-item nav-item--external" target="_blank">🏠 返回前台</a>
+                </div>
             </nav>
             <div class="sidebar-footer">
-                <p>{{ request.user.username }}</p>
+                <p class="sidebar-footer-user">{{ request.user.username }}</p>
                 <a href="{% url 'admin_logout' %}" class="btn-logout">退出</a>
             </div>
         </aside>
         <main class="admin-main">
             <header class="admin-header">
+                <div class="admin-header-toggle" id="adminHeaderToggle"></div>
                 <h1>{% block header %}管理后台{% endblock %}</h1>
             </header>
             <div class="admin-content">

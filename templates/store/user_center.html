@@ -26,9 +26,25 @@
     <div class="user-center-grid">
         <div class="glass form-card">
             <h2>基本信息</h2>
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="profile">
+                <div class="avatar-upload-section">
+                    <div class="avatar-preview">
+                        {% if profile.avatar %}
+                        <img src="{{ profile.avatar.url }}" alt="头像" class="avatar-preview-img">
+                        {% else %}
+                        <span class="avatar-preview-placeholder">{{ request.user.username|slice:":1"|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="avatar-upload-controls">
+                        <label class="btn btn-secondary btn-sm avatar-upload-btn">
+                            更换头像
+                            <input type="file" name="avatar" accept="image/*" hidden id="avatarInput">
+                        </label>
+                        <p class="text-muted avatar-upload-hint">支持 JPG / PNG，建议正方形</p>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>用户名</label>
                     <input type="text" value="{{ request.user.username }}" disabled>
@@ -122,4 +138,29 @@
         {% endif %}
     </section>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+(function(){
+    var input = document.getElementById('avatarInput');
+    if (!input) return;
+    input.addEventListener('change', function(){
+        var file = this.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e){
+            var preview = document.querySelector('.avatar-preview');
+            if (preview) {
+                var img = preview.querySelector('img');
+                if (img) {
+                    img.src = e.target.result;
+                } else {
+                    preview.innerHTML = '<img src="' + e.target.result + '" alt="头像" class="avatar-preview-img">';
+                }
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+})();
+</script>
 {% endblock %}

@@ -27,9 +27,20 @@ def site_preferences(request):
         'has_contact_info': has_contact_info(get_site_config()),
     }
     user = getattr(request, 'user', None)
-    if user and user.is_authenticated and user.is_staff:
-        from .models import ContentReport
-        ctx['admin_pending_reports'] = ContentReport.objects.filter(
-            status=ContentReport.STATUS_PENDING,
+    if user and user.is_authenticated:
+        profile = getattr(user, 'profile', None)
+        if profile is None:
+            from .models import UserProfile
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+        ctx['user_avatar_url'] = profile.avatar.url if profile.avatar else ''
+        # Unread notification count
+        from .models import Notification
+        ctx['unread_notification_count'] = Notification.objects.filter(
+            recipient=user, is_read=False,
         ).count()
+        if user.is_staff:
+            from .models import ContentReport
+            ctx['admin_pending_reports'] = ContentReport.objects.filter(
+                status=ContentReport.STATUS_PENDING,
+            ).count()
     return ctx

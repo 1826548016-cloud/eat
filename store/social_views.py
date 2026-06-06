@@ -200,6 +200,56 @@ def admin_report_list(request):
     })
 
 
+def _apply_report_punishment(request, report, punish, note):
+    """对举报关联的用户执行处罚，返回是否成功。"""
+    from .jwt_auth import bump_auth_token_version
+    reported_user = None
+    if report.post:
+        reported_user = report.post.author
+    elif report.comment:
+        reported_user = report.comment.user
+    if not reported_user or reported_user.is_staff:
+        return False
+    profile, _ = UserProfile.objects.get_or_create(user=reported_user)
+    profile.moderation_note = note or f'举报 #{report.id} 处理'
+    profile.moderated_by = request.user
+    profile.moderated_at = timezone.now()
+    if punish == 'ban':
+        profile.is_banned = True
+        profile.save()
+        reported_user.is_active = False
+        reported_user.save(update_fields=['is_active'])
+        bump_auth_token_version(reported_user)
+        log_operation(
+            request, OperationLog.ACTION_ADMIN_USER_BAN, user=request.user,
+            detail=f'举报处理-封号 {reported_user.username}（举报#{report.id}）',
+            target_type='user', target_id=reported_user.id,
+        )
+        messages.success(request, f'已封号 {reported_user.username}')
+    elif punish == 'mute':
+        profile.is_muted = True
+        profile.save()
+        log_operation(
+            request, OperationLog.ACTION_ADMIN_USER_MUTE, user=request.user,
+            detail=f'举报处理-禁言 {reported_user.username}（举报#{report.id}）',
+            target_type='user', target_id=reported_user.id,
+        )
+        messages.success(request, f'已禁言 {reported_user.username}')
+    elif punish == 'restrict_login':
+        profile.login_restricted = True
+        profile.save()
+        bump_auth_token_version(reported_user)
+        log_operation(
+            request, OperationLog.ACTION_ADMIN_USER_RESTRICT_LOGIN, user=request.user,
+            detail=f'举报处理-限制登录 {reported_user.username}（举报#{report.id}）',
+            target_type='user', target_id=reported_user.id,
+        )
+        messages.success(request, f'已限制登录 {reported_user.username}')
+    else:
+        return False
+    return True
+
+
 @user_passes_test(is_admin, login_url='admin_login')
 def admin_report_handle(request, report_id):
     if request.method != 'POST':
@@ -207,6 +257,22 @@ def admin_report_handle(request, report_id):
     report = get_object_or_404(ContentReport, id=report_id)
     action = request.POST.get('action')
     note = request.POST.get('admin_note', '').strip()[:500]
+    punish = request.POST.get('punish', '').strip()
+
+    # 追加处罚：对已处理的举报直接执行处罚
+    if action == 'punish_only':
+        if report.report_type == ContentReport.TYPE_APPEAL:
+            messages.error(request, '申诉类型不可处罚')
+            return redirect('admin_report_list')
+        if punish:
+            _apply_report_punishment(request, report, punish, note)
+            if note:
+                report.admin_note = note
+                report.save(update_fields=['admin_note'])
+        else:
+            messages.error(request, '请选择处罚方式')
+        return redirect('admin_report_list')
+
     if action == 'resolve':
         report.status = ContentReport.STATUS_RESOLVED
     elif action == 'dismiss':
@@ -223,6 +289,9 @@ def admin_report_handle(request, report_id):
         detail=f'{report.get_status_display()} · {report.get_report_type_display()} #{report.id}',
         target_type='report', target_id=report.id,
     )
+    # 处理时同步执行处罚
+    if punish and action == 'resolve' and report.report_type != ContentReport.TYPE_APPEAL:
+        _apply_report_punishment(request, report, punish, note)
     messages.success(request, '处理结果已保存')
     return redirect('admin_report_list')
 

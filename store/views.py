@@ -15,7 +15,7 @@ from django.db.models import Count, F, Q
 from .models import (
     UserProfile, FoodCategory, LunchPost, PostImage, PostView, Comment,
     Announcement, FriendLink, SiteConfig, LoginLog, OperationLog,
-    ContentReport, PostFavorite, PostEndorsement,
+    ContentReport, PostFavorite, PostEndorsement, Notification,
 )
 from .audit import log_login, log_operation
 from .admin_access import is_admin, is_super_admin
@@ -25,11 +25,12 @@ from .beta_access import (
     generate_invite_code, ensure_beta_code,
 )
 from .user_moderation import can_user_login, can_user_post
-from .post_media import MAX_FOOD_PHOTOS
+from .post_media import MAX_FOOD_PHOTOS, compress_avatar
 from .post_forms import validate_post_form, apply_post_form
 from .rate_limit import check_rate_limit, hit_rate_limit
 from .stats import get_dashboard_stats, get_home_chart_data
 from .social_views import _handle_report
+from .notification_views import create_notification
 from .jwt_auth import (
     AUD_ADMIN,
     AUD_USER,
@@ -98,7 +99,7 @@ def beta_gate(request):
 
 
 def index(request):
-    posts = LunchPost.objects.select_related('category', 'author').prefetch_related('photos').annotate(
+    posts = LunchPost.objects.select_related('category', 'author', 'author__profile').prefetch_related('photos').annotate(
         comment_count=Count('comments'),
         endorse_count=Count('endorsements'),
     ).order_by('-created_at')[:12]
@@ -305,7 +306,7 @@ def incentive(request):
 def post_list(request):
     category_id = request.GET.get('category', '')
     keyword = request.GET.get('q', '')
-    posts = LunchPost.objects.select_related('category', 'author').prefetch_related('photos').annotate(
+    posts = LunchPost.objects.select_related('category', 'author', 'author__profile').prefetch_related('photos').annotate(
         comment_count=Count('comments'),
         endorse_count=Count('endorsements'),
     )
@@ -335,12 +336,12 @@ def _record_post_view(post, user):
 
 def post_detail(request, post_id):
     post = get_object_or_404(
-        LunchPost.objects.select_related('category', 'author').prefetch_related('photos').annotate(
+        LunchPost.objects.select_related('category', 'author', 'author__profile').prefetch_related('photos').annotate(
             endorse_count=Count('endorsements'),
         ),
         id=post_id,
     )
-    comments = post.comments.select_related('user', 'parent', 'parent__user').order_by('created_at')
+    comments = post.comments.select_related('user', 'user__profile', 'parent', 'parent__user', 'parent__user__profile').order_by('created_at')
     if request.method == 'GET' and request.user.is_authenticated and not request.GET.get('posted'):
         _record_post_view(post, request.user)
     if request.method == 'POST':
@@ -365,6 +366,12 @@ def post_detail(request, post_id):
                 obj.delete()
                 messages.success(request, '已取消推荐')
             else:
+                create_notification(
+                    recipient=post.author,
+                    actor=request.user,
+                    notif_type=Notification.TYPE_ENDORSE,
+                    post=post,
+                )
                 messages.success(request, '感谢推荐，已计入首页统计')
             return redirect('post_detail', post_id=post.id)
         if action == 'report':
@@ -387,13 +394,31 @@ def post_detail(request, post_id):
         elif len(content) > 500:
             messages.error(request, '评论不能超过500字')
         else:
-            Comment.objects.create(post=post, user=request.user, content=content, parent=parent)
+            new_comment = Comment.objects.create(post=post, user=request.user, content=content, parent=parent)
             hit_rate_limit(request.user, 'comment')
             log_operation(
                 request, OperationLog.ACTION_COMMENT_CREATE, user=request.user,
                 detail=f'评论《{post.title}》：{content[:80]}',
                 target_type='post', target_id=post.id,
             )
+            # Notify post author (comment on their post)
+            if post.author_id != request.user.id:
+                create_notification(
+                    recipient=post.author,
+                    actor=request.user,
+                    notif_type=Notification.TYPE_COMMENT,
+                    post=post,
+                    comment=new_comment,
+                )
+            # Notify parent comment author (reply to their comment)
+            if parent and parent.user_id != request.user.id and parent.user_id != post.author_id:
+                create_notification(
+                    recipient=parent.user,
+                    actor=request.user,
+                    notif_type=Notification.TYPE_REPLY,
+                    post=post,
+                    comment=new_comment,
+                )
             messages.success(request, '评论成功')
             url = reverse('post_detail', kwargs={'post_id': post.id})
             return redirect(f'{url}?posted=1')
@@ -628,6 +653,12 @@ def user_center(request):
             request.user.save()
             profile.phone = request.POST.get('phone', '')
             profile.campus = request.POST.get('campus', '')
+            avatar_file = request.FILES.get('avatar')
+            if avatar_file:
+                compressed = compress_avatar(avatar_file)
+                if profile.avatar:
+                    profile.avatar.delete(save=False)
+                profile.avatar = compressed
             profile.save()
             log_operation(request, OperationLog.ACTION_PROFILE_UPDATE, user=request.user, detail='更新邮箱/校区/手机')
             messages.success(request, '个人信息更新成功')

@@ -27,6 +27,10 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
+    def avatar_url(self):
+        """Return avatar URL or empty string."""
+        return self.avatar.url if self.avatar else ''
+
 
 class FoodCategory(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name='分类名称')
@@ -80,6 +84,16 @@ class LunchPost(models.Model):
             return first.image
         return self.image
 
+    @property
+    def cover_thumb_url(self):
+        """Return a small thumbnail URL for card/list views."""
+        first = self.photos.order_by('sort_order', 'id').first()
+        if first:
+            return first.thumb_url()
+        if self.image:
+            return self.image.url
+        return ''
+
     def sync_cover_image(self):
         first = self.photos.order_by('sort_order', 'id').first()
         if first:
@@ -92,6 +106,7 @@ class PostImage(models.Model):
         LunchPost, on_delete=models.CASCADE, related_name='photos', verbose_name='推荐',
     )
     image = models.ImageField(upload_to='lunch/photos/', verbose_name='实拍图')
+    thumbnail = models.ImageField(upload_to='lunch/thumbs/', blank=True, verbose_name='缩略图')
     sort_order = models.PositiveIntegerField(default=0, verbose_name='排序')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
 
@@ -102,6 +117,12 @@ class PostImage(models.Model):
 
     def __str__(self):
         return f'{self.post.title} · 图{self.id}'
+
+    def thumb_url(self):
+        """Return thumbnail URL if available, otherwise fall back to original."""
+        if self.thumbnail:
+            return self.thumbnail.url
+        return self.image.url
 
 
 class PostView(models.Model):
@@ -345,6 +366,56 @@ class SiteConfig(models.Model):
     def get_singleton(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class Notification(models.Model):
+    TYPE_COMMENT = 'comment'
+    TYPE_REPLY = 'reply'
+    TYPE_ENDORSE = 'endorse'
+    TYPE_CHOICES = [
+        (TYPE_COMMENT, '评论了你的情报'),
+        (TYPE_REPLY, '回复了你的评论'),
+        (TYPE_ENDORSE, '推荐了你的情报'),
+    ]
+
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='notifications', verbose_name='接收人',
+    )
+    actor = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='notification_actions', verbose_name='操作者',
+    )
+    notif_type = models.CharField(max_length=10, choices=TYPE_CHOICES, verbose_name='通知类型')
+    post = models.ForeignKey(
+        LunchPost, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='notifications', verbose_name='相关情报',
+    )
+    comment = models.ForeignKey(
+        Comment, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='notifications', verbose_name='相关评论',
+    )
+    is_read = models.BooleanField(default=False, verbose_name='已读')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='通知时间')
+
+    class Meta:
+        verbose_name = '通知'
+        verbose_name_plural = verbose_name
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['recipient', 'is_read', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.actor.username} → {self.recipient.username} ({self.get_notif_type_display()})'
+
+    @property
+    def text(self):
+        if self.notif_type == self.TYPE_COMMENT:
+            return f'评论了你的情报《{self.post.title if self.post else "已删除"}》'
+        elif self.notif_type == self.TYPE_REPLY:
+            return f'回复了你在《{self.post.title if self.post else "已删除"}》下的评论'
+        elif self.notif_type == self.TYPE_ENDORSE:
+            return f'推荐了你的情报《{self.post.title if self.post else "已删除"}》'
+        return ''
 
 
 class LoginLog(models.Model):

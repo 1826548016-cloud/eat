@@ -1,38 +1,45 @@
 {% extends 'base.html' %}
 {% block title %}友情链接 - 干饭情报局{% endblock %}
 {% block content %}
-<div class="container links-page">
-    <nav class="page-breadcrumb">
-        <a href="{% url 'index' %}">首页</a>
-        <span>/</span>
-        <span>友情链接</span>
-    </nav>
+<div class="fl-page">
+    <section class="fl-hero">
+        <div class="container">
+            <p class="fl-hero-tag">FRIEND LINKS</p>
+            <h1>友情链接</h1>
+            {% if page_intro %}
+            <p class="fl-hero-desc">{{ page_intro }}</p>
+            {% endif %}
+        </div>
+    </section>
 
-    <header class="links-header">
-        <h1>友情链接</h1>
-        {% if page_intro %}
-        <p class="links-intro text-muted">{{ page_intro }}</p>
-        {% endif %}
-    </header>
-
-    {% if links %}
-    <div class="links-grid">
-        {% for link in links %}
-        <a href="{{ link.url }}" class="link-card glass" target="_blank" rel="noopener noreferrer">
-            <span class="link-card-icon" aria-hidden="true">{{ link.icon }}</span>
-            <span class="link-card-body">
-                <strong class="link-card-name">{{ link.name }}</strong>
-                {% if link.description %}
-                <span class="link-card-desc text-muted">{{ link.description }}</span>
-                {% endif %}
-            </span>
-        </a>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="links-empty glass">
-        <p>暂无友情链接，敬请期待。</p>
-    </div>
-    {% endif %}
+    <section class="fl-body">
+        <div class="container">
+            {% if links %}
+            <div class="fl-grid">
+                {% for link in links %}
+                <a href="{{ link.url }}" class="fl-card" target="_blank" rel="noopener noreferrer">
+                    <div class="fl-card-icon-wrap">
+                        <span class="fl-card-icon">{{ link.icon }}</span>
+                    </div>
+                    <div class="fl-card-info">
+                        <strong class="fl-card-name">{{ link.name }}</strong>
+                        {% if link.description %}
+                        <span class="fl-card-desc">{{ link.description }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="fl-card-arrow" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 12L12 4M12 4H5M12 4V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="fl-empty">
+                <span class="fl-empty-icon">🔗</span>
+                <p>暂无友情链接，敬请期待。</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
 </div>
 {% endblock %}

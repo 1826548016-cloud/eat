@@ -4,8 +4,10 @@ from pathlib import Path
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 MAX_FOOD_PHOTOS = 9
-MAX_IMAGE_DIMENSION = 1920
-JPEG_QUALITY = 85
+MAX_IMAGE_DIMENSION = 1200
+JPEG_QUALITY = 75
+THUMB_MAX_DIMENSION = 400
+THUMB_QUALITY = 70
 
 
 def compress_image(uploaded_file, max_dim=MAX_IMAGE_DIMENSION, quality=JPEG_QUALITY):
@@ -62,6 +64,96 @@ def compress_image(uploaded_file, max_dim=MAX_IMAGE_DIMENSION, quality=JPEG_QUAL
     )
 
 
+AVATAR_MAX_DIMENSION = 256
+AVATAR_QUALITY = 80
+
+
+def compress_avatar(uploaded_file, max_dim=AVATAR_MAX_DIMENSION, quality=AVATAR_QUALITY):
+    """Compress and crop avatar to a square JPEG thumbnail."""
+    from PIL import Image as PilImage
+
+    img = PilImage.open(uploaded_file)
+    if img.mode in ('RGBA', 'P', 'LA'):
+        background = PilImage.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        if img.mode == 'RGBA':
+            background.paste(img, mask=img.split()[-1])
+        else:
+            background.paste(img)
+        img = background
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
+
+    # Crop to square (center crop)
+    w, h = img.size
+    side = min(w, h)
+    left = (w - side) // 2
+    top = (h - side) // 2
+    img = img.crop((left, top, left + side, top + side))
+
+    # Resize to target dimension
+    if img.width > max_dim:
+        img = img.resize((max_dim, max_dim), PilImage.LANCZOS)
+
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG', quality=quality, optimize=True)
+    buf.seek(0)
+
+    original_name = getattr(uploaded_file, 'name', 'avatar.jpg')
+    stem = Path(original_name).stem
+    new_name = f'{stem}_avatar.jpg'
+
+    return InMemoryUploadedFile(
+        buf,
+        field_name=None,
+        name=new_name,
+        content_type='image/jpeg',
+        size=buf.getbuffer().nbytes,
+        charset=None,
+    )
+
+
+def make_thumbnail(uploaded_file, max_dim=THUMB_MAX_DIMENSION, quality=THUMB_QUALITY):
+    """Generate a small JPEG thumbnail from an uploaded image file."""
+    from PIL import Image as PilImage
+
+    img = PilImage.open(uploaded_file)
+    if img.mode in ('RGBA', 'P', 'LA'):
+        background = PilImage.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        if img.mode == 'RGBA':
+            background.paste(img, mask=img.split()[-1])
+        else:
+            background.paste(img)
+        img = background
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
+
+    if max(img.width, img.height) > max_dim:
+        ratio = max_dim / max(img.width, img.height)
+        new_size = (int(img.width * ratio), int(img.height * ratio))
+        img = img.resize(new_size, PilImage.LANCZOS)
+
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG', quality=quality, optimize=True)
+    buf.seek(0)
+
+    original_name = getattr(uploaded_file, 'name', 'image.jpg')
+    stem = Path(original_name).stem
+    new_name = f'{stem}_thumb.jpg'
+
+    return InMemoryUploadedFile(
+        buf,
+        field_name=None,
+        name=new_name,
+        content_type='image/jpeg',
+        size=buf.getbuffer().nbytes,
+        charset=None,
+    )
+
+
 def save_post_uploads(post, *, food_files=None, storefront_file=None):
     from .models import PostImage
 
@@ -80,6 +172,11 @@ def save_post_uploads(post, *, food_files=None, storefront_file=None):
 
     for index, uploaded in enumerate(files):
         compressed = compress_image(uploaded)
-        PostImage.objects.create(post=post, image=compressed, sort_order=existing + index)
+        # Rewind the uploaded file so make_thumbnail can read it too
+        uploaded.seek(0)
+        thumb = make_thumbnail(uploaded)
+        PostImage.objects.create(
+            post=post, image=compressed, thumbnail=thumb, sort_order=existing + index,
+        )
 
     post.sync_cover_image()

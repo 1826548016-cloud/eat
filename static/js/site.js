@@ -41,7 +41,48 @@
     }
 
     bindNavToggle(toggle, nav);
-    bindNavToggle(document.getElementById('adminNavToggle'), document.getElementById('adminSidebarNav'));
+
+    /* Admin sidebar: toggle is-open on the <aside> (CSS target), close on nav-link click */
+    (function () {
+        var btn = document.getElementById('adminNavToggle');
+        var sidebar = document.getElementById('adminSidebar');
+        var navEl = document.getElementById('adminSidebarNav');
+        var headerSlot = document.getElementById('adminHeaderToggle');
+        var sidebarSlot = btn ? btn.parentNode : null;
+        if (!btn || !sidebar || !navEl) return;
+        /* Create backdrop overlay for mobile */
+        var backdrop = document.createElement('div');
+        backdrop.className = 'admin-sidebar-backdrop';
+        sidebar.parentNode.insertBefore(backdrop, sidebar.nextSibling);
+        function closeSidebar() {
+            sidebar.classList.remove('is-open');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+        btn.addEventListener('click', function () {
+            var open = sidebar.classList.toggle('is-open');
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        navEl.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', closeSidebar);
+        });
+        backdrop.addEventListener('click', closeSidebar);
+        /* Relocate toggle: header on mobile (always visible), sidebar on desktop */
+        function placeToggle() {
+            if (window.innerWidth <= 860) {
+                if (headerSlot && btn.parentNode !== headerSlot) headerSlot.appendChild(btn);
+            } else {
+                if (sidebarSlot && btn.parentNode !== sidebarSlot) sidebarSlot.appendChild(btn);
+                sidebar.classList.remove('is-open');
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        }
+        placeToggle();
+        var resizeTimer;
+        window.addEventListener('resize', function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(placeToggle, 100);
+        });
+    })();
 
     document.querySelectorAll('[data-confirm]').forEach(function (btn) {
         btn.addEventListener('click', function (e) {

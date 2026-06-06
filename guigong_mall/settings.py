@@ -4,11 +4,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-guigong-mall-2024-secret-key-for-dev'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-guigong-mall-2024-secret-key-for-dev')
 
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',') if h.strip()]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,6 +36,14 @@ MIDDLEWARE = [
     'store.middleware.HtmlCompressionMiddleware',
 ]
 
+# WhiteNoise: 仅在已安装时启用（生产环境 pip install whitenoise）
+try:
+    import whitenoise  # noqa: F401
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    _WHITENOISE_AVAILABLE = True
+except ImportError:
+    _WHITENOISE_AVAILABLE = False
+
 ROOT_URLCONF = 'guigong_mall.urls'
 
 TEMPLATES = [
@@ -61,11 +69,11 @@ WSGI_APPLICATION = 'guigong_mall.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'caidan',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': os.environ.get('DB_NAME', 'caidan'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'root'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
     }
 }
 
@@ -81,6 +89,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static', BASE_DIR / 'dist']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+if _WHITENOISE_AVAILABLE:
+    STORAGES = {
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -102,3 +116,10 @@ JWT_ACCESS_TTL = timedelta(minutes=15)
 JWT_REFRESH_TTL = timedelta(days=7)
 JWT_LEEWAY_SECONDS = 0
 JWT_COOKIE_SECURE = not DEBUG
+
+# ---- 生产环境安全设置 (DEBUG=False 时自动生效) ----
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'

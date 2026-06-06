@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load store_tags %}
+{% block title %}消息通知 - 干饭情报局{% endblock %}
+{% block content %}
+<div class="container notif-container">
+    <div class="notif-header">
+        <h1 class="notif-title">消息通知</h1>
+        {% if unread_count > 0 %}
+        <form method="post" action="{% url 'notification_mark_all_read' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm">全部标为已读 ({{ unread_count }})</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="notif-list">
+        {% for n in notifications %}
+        <div class="notif-item{% if not n.is_read %} notif-unread{% endif %}">
+            <div class="notif-avatar">
+                {% if n.actor.profile.avatar %}
+                <img src="{{ n.actor.profile.avatar.url }}" alt="" class="avatar avatar--40">
+                {% else %}
+                <span class="avatar avatar--40">{{ n.actor.username|slice:":1"|upper }}</span>
+                {% endif %}
+            </div>
+            <div class="notif-body">
+                <p class="notif-text">
+                    <strong>{{ n.actor.username }}</strong>
+                    {{ n.text }}
+                </p>
+                {% if n.comment and n.comment.content %}
+                <p class="notif-preview">"{{ n.comment.content|truncatechars:60 }}"</p>
+                {% endif %}
+                <time class="notif-time">{{ n.created_at|date:"m-d H:i" }}</time>
+            </div>
+            <div class="notif-actions">
+                {% if not n.is_read %}
+                <form method="post" action="{% url 'notification_mark_read' n.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="notif-read-btn" title="标为已读">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                </form>
+                {% else %}
+                <span class="notif-read-mark">已读</span>
+                {% endif %}
+                {% if n.post %}
+                <a href="{% url 'post_detail' n.post.id %}" class="notif-link-btn" title="查看情报">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="notif-empty">
+            <div class="notif-empty-icon">🔔</div>
+            <p>暂无消息通知</p>
+            <p class="text-muted">当有人评论、推荐你的情报或回复你的评论时，你会收到通知。</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
